@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Technical stack
+Yarn for package manager
+NestJS for the backend
+NextJS for the frontend
+TailwindCSS for styling
+SQL databases, never JSON file storage
+Separate databases for dev, test, and prod
+TypeScript tests
