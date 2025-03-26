@@ -140,7 +140,7 @@ export default function IllustrationsPage() {
         "Vintage-inspired advertising poster for Pipi Beverage, featuring retro typography and illustration style.",
       medium: "Digital Illustration",
       year: "2021",
-      src: "/ArtCatalog/Pipi Beverage Poster.jpg",
+      src: "/ArtCatalog/PipiBeveragePoster.jpg",
       aspectRatio: 0.9,
     },
     {
@@ -200,7 +200,7 @@ export default function IllustrationsPage() {
         "Symbolic and allegorical illustration combining religious and astrological imagery in a detailed composition.",
       medium: "Digital Painting",
       year: "2020",
-      src: "/ArtCatalog/Lucifer Christ Capricorn.jpg",
+      src: "/ArtCatalog/LuciferChristCapricorn.jpg",
       aspectRatio: 1.5,
     },
     {
@@ -220,7 +220,7 @@ export default function IllustrationsPage() {
         "Creative illustration of a hybrid animal, combining features from different species in a seamless design.",
       medium: "Digital Concept Art",
       year: "2020",
-      src: "/ArtCatalog/Hybrid Animal.jpg",
+      src: "/ArtCatalog/HybridAnimal.jpg",
       aspectRatio: 0.8,
     },
     {
@@ -300,7 +300,7 @@ export default function IllustrationsPage() {
         "Character design of a steampunk-inspired tinker with elaborate costume and mechanical accessories.",
       medium: "Digital Concept Art",
       year: "2021",
-      src: "/ArtCatalog/Debonair Tinker.jpg",
+      src: "/ArtCatalog/DebonairTinker.jpg",
       aspectRatio: 0.8,
     },
     {
@@ -320,7 +320,7 @@ export default function IllustrationsPage() {
         "Fan art inspired by the TV series Breaking Bad, capturing iconic characters and themes from the show.",
       medium: "Digital Illustration",
       year: "2020",
-      src: "/ArtCatalog/Breaking Bad.jpg",
+      src: "/ArtCatalog/BreakingBad.jpg",
       aspectRatio: 0.7,
     },
     {
@@ -330,7 +330,7 @@ export default function IllustrationsPage() {
         "Surreal illustration depicting a break from reality, with dreamlike elements and psychological themes.",
       medium: "Digital Painting",
       year: "2021",
-      src: "/ArtCatalog/Break From Reality.jpg",
+      src: "/ArtCatalog/BreakFromReality.jpg",
       aspectRatio: 1.0,
     },
     {
@@ -419,7 +419,9 @@ export default function IllustrationsPage() {
   return (
     <div className="w-full mx-auto py-6 bg-slate-900">
       <div className="px-4 md:px-6 mb-8">
-        <h2 className="text-2xl font-bold mb-2 text-white">Illustrations</h2>
+        <h2 className="text-2xl font-bold mb-2 text-white font-['Epkaisho']">
+          DIGITAL ARTS
+        </h2>
         <p className="text-slate-300 max-w-2xl">
           Browse through my illustration portfolio showcasing digital and
           traditional artwork across various styles and subjects.

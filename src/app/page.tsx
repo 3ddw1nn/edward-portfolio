@@ -38,13 +38,13 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-16"
           >
-            <div className="inline-block rounded-none bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-xs text-blue-300 border border-blue-500/20 transform -rotate-1 uppercase tracking-widest font-mono mb-6">
+            <div className="inline-block rounded-none bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-xs text-blue-300 border border-blue-500/20 transform -rotate-1 uppercase tracking-widest">
               Portfolio
             </div>
 
             <div className="flex flex-col md:flex-row items-start md:items-end justify-between">
               <h2 className="text-left">
-                <span className="text-4xl md:text-6xl font-black tracking-tight text-white mix-blend-difference">
+                <span className="text-4xl md:text-6xl font-black tracking-tight text-white mix-blend-difference font-['Epkaisho']">
                   FEATURED
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-amber-400">
@@ -84,7 +84,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-white mb-3 uppercase tracking-tight">
+                  <h3 className="text-2xl font-bold text-white mb-3 uppercase tracking-tight font-['Epkaisho']">
                     Applications
                   </h3>
 
@@ -130,7 +130,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-white mb-3 uppercase tracking-tight">
+                  <h3 className="text-2xl font-bold text-white mb-3 uppercase tracking-tight font-['Epkaisho']">
                     Illustrations
                   </h3>
 
@@ -176,7 +176,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-white mb-3 uppercase tracking-tight">
+                  <h3 className="text-2xl font-bold text-white mb-3 uppercase tracking-tight font-['Epkaisho']">
                     Architecture
                   </h3>
 
@@ -229,10 +229,12 @@ export default function Home() {
                 WHO I AM
               </div>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-white mix-blend-difference">
-                <span className="text-2xl block mb-1 font-light tracking-widest">
+                <span className="text-2xl block mb-1 font-light tracking-widest font-['Epkaisho']">
                   NOT YOUR TYPICAL
                 </span>
-                <span className="font-black italic">CREATIVE</span>
+                <span className="font-black italic font-['Epkaisho']">
+                  CREATIVE
+                </span>
               </h2>
               <div className="space-y-5 text-slate-300">
                 <p className="text-xl font-light leading-relaxed">

@@ -83,14 +83,14 @@ export function Hero() {
                 transition={{ duration: 0.6 }}
                 className="space-y-4"
               >
-                <div className="inline-block rounded-none bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-xs text-blue-300 border border-blue-500/20 transform -rotate-1 uppercase tracking-widest font-mono">
+                <div className="inline-block rounded-none bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-xs text-blue-300 border border-blue-500/20 transform -rotate-1 uppercase tracking-widest">
                   Software Engineer
                 </div>
-                <div className="inline-block rounded-none bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-xs text-blue-300 border border-blue-500/20 transform -rotate-1 uppercase tracking-widest font-mono">
+                <div className="inline-block rounded-none bg-blue-500/10 backdrop-blur-sm px-4 py-2 text-xs text-blue-300 border border-blue-500/20 transform -rotate-1 uppercase tracking-widest">
                   Artist
                 </div>
                 <h1 className="text-left">
-                  <span className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mix-blend-difference">
+                  <span className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white mix-blend-difference font-['Epkaisho']">
                     EDWARD
                     <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-amber-400">
@@ -112,7 +112,7 @@ export function Hero() {
                 className="space-y-8"
               >
                 <div className="min-h-[3em]">
-                  <p className="text-4xl md:text-5xl lg:text-6xl text-white font-mono font-bold tracking-tight flex items-baseline">
+                  <p className="text-4xl md:text-5xl lg:text-6xl text-white font-['Epkaisho'] font-bold tracking-tight flex items-baseline">
                     <span className="mr-4">I</span>
                     <motion.span
                       key={textIndex}
@@ -174,9 +174,7 @@ export function Hero() {
         }}
         className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-slate-300 opacity-70 z-20"
       >
-        <span className="text-xs uppercase tracking-widest mb-2 font-mono">
-          Scroll
-        </span>
+        <span className="text-xs uppercase tracking-widest mb-2">Scroll</span>
         <ChevronDown className="h-4 w-4" />
       </motion.div>
     </div>

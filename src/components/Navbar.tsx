@@ -31,10 +31,12 @@ export function Navbar() {
             href="/"
             className="flex items-center gap-2 transition-colors hover:opacity-80"
           >
-            <span className="font-semibold text-lg hidden sm:inline-block">
+            <span className="font-semibold text-lg hidden sm:inline-block font-['Epkaisho']">
               Edward Lee
             </span>
-            <span className="font-semibold text-lg sm:hidden">E. Lee</span>
+            <span className="font-semibold text-lg sm:hidden font-['Epkaisho']">
+              E. Lee
+            </span>
           </Link>
         </div>
 
@@ -72,7 +74,9 @@ export function Navbar() {
           </DropdownMenu>
 
           <Button asChild size="sm" className="h-9 px-4 font-medium">
-            <Link href="/contact">Contact</Link>
+            <Link href="/contact" className="">
+              Contact
+            </Link>
           </Button>
         </nav>
 
@@ -100,7 +104,9 @@ export function Navbar() {
                     EL
                   </div>
                 </div>
-                <span className="font-semibold text-lg">Edward Lee</span>
+                <span className="font-semibold text-lg font-['Epkaisho']">
+                  Edward Lee
+                </span>
               </div>
 
               <nav className="flex flex-col gap-5">

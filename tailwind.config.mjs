@@ -51,7 +51,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        sans: ["Epkaisho", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
     },

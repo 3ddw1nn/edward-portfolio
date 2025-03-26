@@ -157,7 +157,9 @@ export default function ApplicationsPage() {
 
       <div className="relative z-10">
         <div className="px-4 md:px-6 mb-12">
-          <h2 className="text-3xl font-bold mb-3 text-white">Introduction</h2>
+          <h2 className="text-3xl font-bold mb-3 text-white font-['Epkaisho']">
+            Introduction
+          </h2>
           <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4"></div>
           <p className="text-slate-300 max-w-2xl">
             I learned to code before AI tools existed, which means I know

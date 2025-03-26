@@ -157,8 +157,8 @@ export default function ArchitecturePage() {
   return (
     <div className="w-full mx-auto py-6 bg-slate-900 min-h-screen">
       <div className="px-4 md:px-6 mb-8">
-        <h2 className="text-2xl font-bold mb-2 text-white">
-          Architectural Design
+        <h2 className="text-2xl font-bold mb-2 text-white font-['Epkaisho']">
+          Residential Design
         </h2>
         <p className="text-slate-300 max-w-2xl">
           Explore my portfolio of residential architectural designs, showcasing

@@ -13,7 +13,9 @@ export function Footer() {
                   EL
                 </div>
               </div>
-              <span className="font-semibold">Edward Lee</span>
+              <span className="font-semibold font-['Epkaisho']">
+                Edward Lee
+              </span>
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md">
               Creative professional specializing in applications, illustrations,

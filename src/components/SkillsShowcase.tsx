@@ -84,7 +84,7 @@ export function SkillsShowcase() {
 
           <div className="flex flex-col md:flex-row items-start md:items-end justify-between">
             <h2 className="text-left">
-              <span className="text-4xl md:text-6xl font-black tracking-tight text-white mix-blend-difference">
+              <span className="text-4xl md:text-6xl font-black tracking-tight text-white mix-blend-difference font-['Epkaisho']">
                 TECH
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-amber-400">
@@ -122,9 +122,9 @@ export function SkillsShowcase() {
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500/50 via-blue-400/20 to-transparent"></div>
 
               <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-widest flex items-center">
+                <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-widest flex items-center font-['Epkaisho']">
                   <span className="inline-block h-4 w-4 bg-blue-400 mr-3 transform -rotate-12"></span>
-                  Bits &amp; Bytes
+                  Code
                 </h3>
 
                 <div className="flex flex-wrap">
@@ -153,9 +153,9 @@ export function SkillsShowcase() {
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500/50 via-purple-400/20 to-transparent"></div>
 
               <div className="p-6">
-                <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-widest flex items-center">
+                <h3 className="text-xl font-bold text-white mb-6 uppercase tracking-widest flex items-center font-['Epkaisho']">
                   <span className="inline-block h-4 w-4 bg-purple-400 mr-3 transform rotate-12"></span>
-                  Digital Sorcery
+                  Programs
                 </h3>
 
                 <div className="flex flex-wrap">
