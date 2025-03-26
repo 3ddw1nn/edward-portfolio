@@ -206,7 +206,7 @@ const SkillIcon = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="w-full aspect-square p-1.5">
+      <div className="w-full aspect-square p-1.5 relative">
         <motion.div
           className={`w-full h-full flex items-center justify-center bg-slate-700/40 backdrop-blur-md border ${borderColor} overflow-hidden transform hover:rotate-0 transition-all duration-300`}
           style={{ rotate: delay % 0.2 < 0.1 ? "1deg" : "-1deg" }}
@@ -242,18 +242,18 @@ const SkillIcon = ({
             />
           </div>
         </motion.div>
-      </div>
 
-      {isHovered && (
-        <motion.div
-          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 bg-slate-800/90 backdrop-blur-sm text-white text-[10px] px-2 py-1 border border-slate-700/50 shadow-lg uppercase tracking-wider"
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {skill.title}
-        </motion.div>
-      )}
+        {isHovered && (
+          <motion.div
+            className="absolute -bottom-7 left-0 right-0 mx-auto text-center bg-slate-800/90 backdrop-blur-sm text-white text-[10px] px-2 py-1 border border-slate-700/50 shadow-lg uppercase tracking-wider w-max z-[9999]"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {skill.title}
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 };

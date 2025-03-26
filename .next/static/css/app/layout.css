@@ -795,6 +795,18 @@ body {
 .top-\[40\%\] {
   top: 40%;
 }
+.-top-8 {
+  top: -2rem;
+}
+.-top-10 {
+  top: -2.5rem;
+}
+.top-full {
+  top: 100%;
+}
+.-bottom-7 {
+  bottom: -1.75rem;
+}
 .z-0 {
   z-index: 0;
 }
@@ -806,6 +818,9 @@ body {
 }
 .z-50 {
   z-index: 50;
+}
+.z-\[9999\] {
+  z-index: 9999;
 }
 .order-1 {
   order: 1;
@@ -1124,6 +1139,10 @@ body {
 }
 .w-full {
   width: 100%;
+}
+.w-max {
+  width: -moz-max-content;
+  width: max-content;
 }
 .min-w-\[5ch\] {
   min-width: 5ch;
