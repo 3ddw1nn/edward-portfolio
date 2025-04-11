@@ -43,8 +43,8 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col md:flex-row items-start md:items-end justify-between">
-              <h2 className="text-left">
-                <span className="text-4xl md:text-6xl font-black tracking-tight text-white mix-blend-difference font-['Epkaisho']">
+              <h2 className="text-left mt-5">
+                <span className=" text-4xl md:text-6xl font-black tracking-tight text-white mix-blend-difference font-['Epkaisho']">
                   FEATURED
                   <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-amber-400">
