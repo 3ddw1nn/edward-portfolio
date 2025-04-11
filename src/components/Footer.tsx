@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Github, Linkedin, Twitter, Instagram } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -8,10 +9,13 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-slate-700 to-slate-900">
-                <div className="flex h-full w-full items-center justify-center text-white font-semibold text-xs">
-                  EL
-                </div>
+              <div className="relative h-8 w-8 overflow-hidden rounded-full bg-white">
+                <Image
+                  src="/images/HeaderLogo.png"
+                  alt="Edward Lee Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <span className="font-semibold font-['Epkaisho']">
                 Edward Lee
