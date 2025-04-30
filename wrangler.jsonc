@@ -5,8 +5,9 @@
     "directory": "./.next/static"
   },
   "build": {
-    "command": "yarn build",
+    "command": "npx next build",
     "cwd": "."
   },
-  "node_compat": true
+  "node_compat": true,
+  "pages_build_output_dir": "out"
 }
