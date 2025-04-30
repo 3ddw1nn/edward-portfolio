@@ -10,15 +10,6 @@ const nextConfig = {
       },
     ],
   },
-  // Ensure CSS is included in the static export
-  optimizeFonts: false,
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.css$/,
-      use: ["style-loader", "css-loader", "postcss-loader"],
-    });
-    return config;
-  },
 };
 
 export default nextConfig;

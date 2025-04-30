@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import { GeistSans, GeistMono } from "geist/font";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { PostHogProvider } from "@/components/PostHogProvider";
-
-const geistSans = GeistSans;
-const geistMono = GeistMono;
 
 export const metadata: Metadata = {
   title: "Edward Lee - Portfolio",
@@ -21,7 +17,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
+      className={`dark ${GeistSans.className} ${GeistMono.className}`}
     >
       <body
         className={`antialiased min-h-screen flex flex-col bg-slate-900 text-slate-50`}
