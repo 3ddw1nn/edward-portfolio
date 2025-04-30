@@ -8,5 +8,8 @@
     "command": "yarn build",
     "cwd": "."
   },
-  "node_compat": true
+  "node_compat": true,
+  "vars": {
+    "NODE_VERSION": "18.18.0"
+  }
 }
