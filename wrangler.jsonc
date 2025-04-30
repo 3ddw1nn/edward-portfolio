@@ -7,5 +7,6 @@
   "build": {
     "command": "yarn build",
     "cwd": "."
-  }
+  },
+  "node_compat": true
 }
