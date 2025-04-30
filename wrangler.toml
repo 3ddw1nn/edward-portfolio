@@ -1,0 +1,9 @@
+[build]
+command = "npx next build"
+cwd = "."
+
+[build.environment]
+NODE_VERSION = "18.17.1"
+
+[pages]
+build_output_dir = "out" 
