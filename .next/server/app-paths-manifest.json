@@ -1,4 +1,11 @@
 {
   "/not-found": "app/not-found.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/_not-found": "app/_not-found.js",
+  "/contact/page": "app/contact/page.js",
+  "/api/debug/route": "app/api/debug/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/portfolio/applications/page": "app/portfolio/applications/page.js",
+  "/portfolio/architecture/page": "app/portfolio/architecture/page.js",
+  "/portfolio/illustrations/page": "app/portfolio/illustrations/page.js"
 }
