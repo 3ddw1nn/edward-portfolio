@@ -1,0 +1,11 @@
+{
+  "name": "edward-lee-portfolio",
+  "compatibility_date": "2025-04-30",
+  "assets": {
+    "directory": "./.next/static"
+  },
+  "build": {
+    "command": "yarn build",
+    "cwd": "."
+  }
+}
