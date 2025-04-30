@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronDown } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 export function Hero() {
@@ -114,16 +114,18 @@ export function Hero() {
                 <div className="min-h-[3em]">
                   <p className="text-4xl md:text-5xl lg:text-6xl text-white font-['Epkaisho'] font-bold tracking-tight flex items-baseline">
                     <span className="mr-4">I</span>
-                    <motion.span
-                      key={textIndex}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.5 }}
-                      className="inline-block min-w-[5ch]"
-                    >
-                      {phrases[textIndex]}
-                    </motion.span>
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={textIndex}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.5 }}
+                        className="inline-block min-w-[5ch]"
+                      >
+                        {phrases[textIndex]}
+                      </motion.span>
+                    </AnimatePresence>
                   </p>
                 </div>
 
@@ -161,7 +163,6 @@ export function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
