@@ -2224,6 +2224,10 @@ body {
   padding: 2rem;
 }
 
+.p-0 {
+  padding: 0px;
+}
+
 .px-2 {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
@@ -2332,6 +2336,10 @@ body {
 
 .font-mono {
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.font-\[\\\'Epkaisho\\\'\] {
+  font-family: \'Epkaisho\';
 }
 
 .text-2xl {

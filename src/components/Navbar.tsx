@@ -49,24 +49,33 @@ export function Navbar() {
             </Link>
           </Button>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger>
               <Button variant="ghost" className="h-9 px-4 font-medium">
                 Portfolio
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/portfolio/applications" className="w-full py-2">
+              <DropdownMenuItem className="cursor-pointer p-0">
+                <Link
+                  href="/portfolio/applications"
+                  className="w-full px-2 py-1.5 block"
+                >
                   Applications
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/portfolio/illustrations" className="w-full py-2">
+              <DropdownMenuItem className="cursor-pointer p-0">
+                <Link
+                  href="/portfolio/illustrations"
+                  className="w-full px-2 py-1.5 block"
+                >
                   Illustrations
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/portfolio/architecture" className="w-full py-2">
+              <DropdownMenuItem className="cursor-pointer p-0">
+                <Link
+                  href="/portfolio/architecture"
+                  className="w-full px-2 py-1.5 block"
+                >
                   Architecture
                 </Link>
               </DropdownMenuItem>
@@ -81,7 +90,7 @@ export function Navbar() {
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="flex items-center gap-2 md:hidden">
+        {/* <div className="flex items-center gap-2 md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -104,7 +113,7 @@ export function Navbar() {
                     EL
                   </div>
                 </div>
-                <span className="font-semibold text-lg font-['Epkaisho']">
+                <span className="font-semibold text-lg font-[\'Epkaisho\']">
                   Edward Lee
                 </span>
               </div>
@@ -154,7 +163,7 @@ export function Navbar() {
               </nav>
             </SheetContent>
           </Sheet>
-        </div>
+        </div> */}
       </div>
     </header>
   );
