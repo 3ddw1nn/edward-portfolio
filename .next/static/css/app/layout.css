@@ -3101,6 +3101,15 @@ body {
   background-color: rgb(15 23 42 / var(--tw-bg-opacity, 1));
 }
 
+.dark\:bg-black:is(.dark *) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
+}
+
+.dark\:bg-slate-700\/50:is(.dark *) {
+  background-color: rgb(51 65 85 / 0.5);
+}
+
 .dark\:from-slate-200:is(.dark *) {
   --tw-gradient-from: #e2e8f0 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(226 232 240 / 0) var(--tw-gradient-to-position);

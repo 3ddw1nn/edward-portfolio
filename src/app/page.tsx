@@ -10,12 +10,12 @@ import { Hero } from "@/components/Hero";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-900">
+    <div className="flex flex-col min-h-screen bg-black">
       {/* Hero Component */}
       <Hero />
 
       {/* Featured Work Section */}
-      <section className="w-full py-20 md:py-28 bg-gradient-to-b from-slate-900 to-slate-800 relative overflow-hidden">
+      <section className="w-full py-20 md:py-28 bg-black relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
           <div className="absolute -rotate-45 h-[1px] w-[200%] bg-gradient-to-r from-transparent via-blue-400 to-transparent top-1/4 -left-1/2"></div>
@@ -211,7 +211,7 @@ export default function Home() {
       <SkillsShowcase />
 
       {/* About Section */}
-      <section className="w-full py-20 md:py-28 bg-gradient-to-b from-slate-800 to-slate-900 relative overflow-hidden">
+      <section className="w-full py-20 md:py-28 bg-black relative overflow-hidden">
         {/* Background glow effects */}
         <div className="absolute top-1/4 right-0 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl"></div>
         <div className="absolute bottom-1/4 left-0 w-96 h-96 rounded-full bg-purple-500/5 blur-3xl"></div>

@@ -47,7 +47,7 @@ export default function ContactPage() {
   return (
     <div className="container mx-auto py-12 md:py-20 px-4 md:px-6">
       <div className="flex flex-col items-center text-center mb-12">
-        <div className="inline-block rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1 text-sm mb-3">
+        <div className="inline-block rounded-lg bg-slate-100 dark:bg-slate-700/50 px-3 py-1 text-sm mb-3">
           Get In Touch
         </div>
         <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4">
@@ -61,7 +61,7 @@ export default function ContactPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
         <div className="order-2 md:order-1">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 md:p-8 shadow-sm border">
+          <div className="bg-white dark:bg-black rounded-xl p-6 md:p-8 shadow-sm border dark:border-slate-700">
             <h2 className="text-xl font-bold mb-6">Send Me a Message</h2>
 
             {isSubmitted ? (
@@ -88,7 +88,7 @@ export default function ContactPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-slate-900 dark:border-slate-700"
+                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-black dark:border-slate-700"
                   placeholder="Your name"
                 />
               </div>
@@ -107,7 +107,7 @@ export default function ContactPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-slate-900 dark:border-slate-700"
+                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-black dark:border-slate-700"
                   placeholder="your.email@example.com"
                 />
               </div>
@@ -126,7 +126,7 @@ export default function ContactPage() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-slate-900 dark:border-slate-700"
+                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-black dark:border-slate-700"
                   placeholder="What is this regarding?"
                 />
               </div>
@@ -145,7 +145,7 @@ export default function ContactPage() {
                   onChange={handleChange}
                   required
                   rows={5}
-                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-slate-900 dark:border-slate-700"
+                  className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white dark:bg-black dark:border-slate-700"
                   placeholder="Your message here..."
                 />
               </div>
@@ -191,7 +191,7 @@ export default function ContactPage() {
         </div>
 
         <div className="order-1 md:order-2">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 md:p-8 shadow-sm border mb-8">
+          <div className="bg-white dark:bg-black rounded-xl p-6 md:p-8 shadow-sm border dark:border-slate-700 mb-8">
             <h2 className="text-xl font-bold mb-6">Contact Information</h2>
 
             <div className="space-y-6">
@@ -217,7 +217,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 md:p-8 shadow-sm border">
+          <div className="bg-white dark:bg-black rounded-xl p-6 md:p-8 shadow-sm border dark:border-slate-700">
             <h2 className="text-xl font-bold mb-6">Connect With Me</h2>
 
             <div className="flex flex-wrap gap-3">

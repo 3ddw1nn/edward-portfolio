@@ -55,7 +55,7 @@ const programSkills: Skill[] = [
 // Main Skills Showcase component
 export function SkillsShowcase() {
   return (
-    <section className="w-full py-20 md:py-28 bg-slate-800 relative overflow-hidden">
+    <section className="w-full py-20 md:py-28 bg-black relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
         <div className="absolute -rotate-45 h-[1px] w-[200%] bg-gradient-to-r from-transparent via-blue-400 to-transparent top-1/4 -left-1/2"></div>
