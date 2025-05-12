@@ -23,7 +23,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-slate-900/95 backdrop-blur supports-[backdrop-filter]:bg-slate-900/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-black/60">
       <div className="container mx-auto flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Logo and Name */}
@@ -82,11 +82,12 @@ export function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button asChild size="sm" className="h-9 px-4 font-medium">
-            <Link href="/contact" className="">
-              Contact
-            </Link>
-          </Button>
+          <Link
+            href="/contact"
+            className="text-sm font-medium text-slate-50 hover:text-slate-300 transition-colors px-4 py-2"
+          >
+            Contact
+          </Link>
         </nav>
 
         {/* Mobile Navigation */}
