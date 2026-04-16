@@ -171,10 +171,10 @@
 
 /* Blog prose styles */
 .prose-blog {
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.88);
   font-family: var(--font-body), Georgia, serif;
   font-size: 1.0625rem;
-  line-height: 1.75;
+  line-height: 1.85;
   max-width: 100%;
 }
 
@@ -192,7 +192,7 @@
   font-family: var(--font-brutal), sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.9);
+  color: #fff;
   letter-spacing: 0.02em;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
@@ -203,15 +203,15 @@
 }
 
 .prose-blog a {
-  color: #fff;
+  color: #e04545;
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: rgba(255,255,255,0.3);
+  text-decoration-color: rgba(224,69,69,0.4);
   transition: text-decoration-color 0.2s;
 }
 
 .prose-blog a:hover {
-  text-decoration-color: rgba(255,255,255,0.8);
+  text-decoration-color: rgba(224,69,69,0.9);
 }
 
 .prose-blog ul {
@@ -224,13 +224,14 @@
   padding-left: 1.25rem;
   position: relative;
   margin-bottom: 0.5rem;
+  color: rgba(255,255,255,0.88);
 }
 
 .prose-blog ul li::before {
   content: "—";
   position: absolute;
   left: 0;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.4);
 }
 
 .prose-blog ol {
@@ -241,11 +242,12 @@
 
 .prose-blog ol li {
   margin-bottom: 0.5rem;
+  color: rgba(255,255,255,0.88);
 }
 
 .prose-blog pre {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
   margin-bottom: 1.5rem;
@@ -255,8 +257,8 @@
 
 .prose-blog code {
   font-size: 0.875em;
-  color: rgba(255,255,255,0.85);
-  background: rgba(255,255,255,0.07);
+  color: #e04545;
+  background: rgba(224,69,69,0.1);
   padding: 0.15em 0.4em;
   border-radius: 2px;
 }
@@ -265,20 +267,20 @@
   background: transparent;
   padding: 0;
   font-size: inherit;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.85);
 }
 
 .prose-blog blockquote {
-  border-left: 2px solid rgba(255,255,255,0.2);
+  border-left: 2px solid rgba(224,69,69,0.5);
   padding-left: 1.25rem;
   margin: 1.5rem 0;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.75);
   font-style: italic;
 }
 
 .prose-blog hr {
   border: none;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255,255,255,0.12);
   margin: 2.5rem 0;
 }
 

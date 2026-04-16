@@ -30,12 +30,6 @@ const disciplines = [
     desc: "Residential concepts & spatial studies",
     href: "/portfolio/architecture",
   },
-  {
-    num: "04",
-    title: "Writing",
-    desc: "Engineering, design & process",
-    href: "/blog",
-  },
 ];
 
 function DisciplinesSection() {

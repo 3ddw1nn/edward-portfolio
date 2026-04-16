@@ -55,7 +55,9 @@ export default function RootLayout({
           <main className="flex-1 font-sans text-ink selection:bg-ink/10 selection:text-ink">
             {children}
           </main>
-          <Footer />
+          <div className="relative z-[25]">
+            <Footer />
+          </div>
         </PostHogProvider>
       </body>
     </html>
