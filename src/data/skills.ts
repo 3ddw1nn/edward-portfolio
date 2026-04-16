@@ -1,0 +1,42 @@
+import type { Skill } from "@/types";
+
+export const codeSkills: Skill[] = [
+  { title: "JavaScript", src: "/Skills/code/JavaScriptIcon.svg" },
+  { title: "TypeScript", src: "/Skills/code/TypeScriptIcon.svg" },
+  { title: "React", src: "/Skills/code/ReactIcon.svg" },
+  { title: "React Native", src: "/Skills/code/ReactNativeIcon.png" },
+  { title: "Node.js", src: "/Skills/code/NodeJSIcon.png" },
+  { title: "NestJS", src: "/Skills/code/NestJSIcon.svg" },
+  { title: "HTML", src: "/Skills/code/HTMLIcon.svg" },
+  { title: "CSS", src: "/Skills/code/CSSIcon.svg" },
+  { title: "Tailwind", src: "/Skills/code/TailwindIcon.svg" },
+  { title: "Netlify", src: "/Skills/code/NetlifyIcon.svg" },
+  { title: "Nx", src: "/Skills/code/NxIcon.svg" },
+  { title: "Prisma", src: "/Skills/code/PrismaIcon.svg" },
+  { title: "TurboRepo", src: "/Skills/code/TurboRepoIcon.png" },
+  { title: "Firebase", src: "/Skills/code/FireBaseIcon.png" },
+  { title: "GitHub", src: "/Skills/code/GitHubIcon.svg" },
+  { title: "MongoDB", src: "/Skills/code/MongoDBIcon.svg" },
+  { title: "Heroku", src: "/Skills/code/HerokuIcon.png" },
+  { title: "Railway", src: "/Skills/code/RailwayIcon.svg" },
+  { title: "CloudFlare", src: "/Skills/code/CloudFlareIcon.svg" },
+];
+
+export const programSkills: Skill[] = [
+  { title: "Photoshop", src: "/Skills/programs/PSIcon.svg" },
+  { title: "Illustrator", src: "/Skills/programs/AiIcon.svg" },
+  { title: "After Effects", src: "/Skills/programs/AEIcon.svg" },
+  { title: "Premiere Pro", src: "/Skills/programs/PRIcon.svg" },
+  { title: "InDesign", src: "/Skills/programs/IDIcon.svg" },
+  { title: "XD", src: "/Skills/programs/XDIcon.svg" },
+  { title: "Figma", src: "/Skills/programs/FigmaIcon.svg" },
+  { title: "Sketch", src: "/Skills/programs/SketchIcon.svg" },
+  { title: "Animate", src: "/Skills/programs/ANIcon.svg" },
+  { title: "ZBrush", src: "/Skills/programs/ZBrushIcon.png" },
+  { title: "Final Cut Pro", src: "/Skills/programs/FinalCutProIcon.png" },
+  { title: "VS Code", src: "/Skills/programs/VsCodeIcon.svg" },
+  { title: "Postman", src: "/Skills/programs/PostManIcon.svg" },
+  { title: "ProCreate", src: "/Skills/programs/ProCreateIcon.svg" },
+  { title: "DragonFrame", src: "/Skills/programs/DragonFrameIcon.svg" },
+  { title: "AutoDesk", src: "/Skills/programs/AutoDeskIcon.svg" },
+];

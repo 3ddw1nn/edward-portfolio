@@ -1,89 +1,323 @@
-@font-face {
-  font-family: "Epkaisho";
-  src: url("/fonts/EPKAISHO.TTF") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+000-5FF; /* Latin */
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.129 0.042 264.695);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.129 0.042 264.695);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.129 0.042 264.695);
-    --primary: oklch(0.208 0.042 265.755);
-    --primary-foreground: oklch(0.984 0.003 247.858);
-    --secondary: oklch(0.968 0.007 247.896);
-    --secondary-foreground: oklch(0.208 0.042 265.755);
-    --muted: oklch(0.968 0.007 247.896);
-    --muted-foreground: oklch(0.554 0.046 257.417);
-    --accent: oklch(0.968 0.007 247.896);
-    --accent-foreground: oklch(0.208 0.042 265.755);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.929 0.013 255.508);
-    --input: oklch(0.929 0.013 255.508);
-    --ring: oklch(0.704 0.04 256.788);
-    --radius: 0.625rem;
-  }
-
-  .dark {
-    --background: oklch(0.129 0.042 264.695);
-    --foreground: oklch(0.984 0.003 247.858);
-    --card: oklch(0.129 0.042 264.695);
-    --card-foreground: oklch(0.984 0.003 247.858);
-    --popover: oklch(0.129 0.042 264.695);
-    --popover-foreground: oklch(0.984 0.003 247.858);
-    --primary: oklch(0.984 0.003 247.858);
-    --primary-foreground: oklch(0.208 0.042 265.755);
-    --secondary: oklch(0.279 0.041 260.031);
-    --secondary-foreground: oklch(0.984 0.003 247.858);
-    --muted: oklch(0.279 0.041 260.031);
-    --muted-foreground: oklch(0.704 0.04 256.788);
-    --accent: oklch(0.279 0.041 260.031);
-    --accent-foreground: oklch(0.984 0.003 247.858);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.279 0.041 260.031);
-    --input: oklch(0.279 0.041 260.031);
-    --ring: oklch(0.446 0.043 257.281);
+    --paper: #e9e3d8;
+    --paper-warm: #f3eee6;
+    --paper-deep: #ddd6ca;
+    --ink: #0f0e0c;
+    --ink-muted: #3a3633;
+    --ink-faint: #5c5650;
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--paper-warm);
+    --card-foreground: var(--ink);
+    --popover: var(--paper-warm);
+    --popover-foreground: var(--ink);
+    --primary: var(--ink);
+    --primary-foreground: var(--paper-warm);
+    --secondary: var(--paper-deep);
+    --secondary-foreground: var(--ink);
+    --muted: var(--paper-deep);
+    --muted-foreground: var(--ink-muted);
+    --accent: var(--paper-deep);
+    --accent-foreground: var(--ink);
+    --destructive: #8b2e2e;
+    --destructive-foreground: var(--paper-warm);
+    --border: rgba(20, 18, 16, 0.14);
+    --input: rgba(20, 18, 16, 0.18);
+    --ring: var(--ink);
+    --radius: 0;
   }
 
   * {
     border-color: var(--border);
     outline-color: var(--ring);
-    outline-width: 1px;
+  }
+
+  html {
+    background-color: #000;
   }
 
   body {
-    background-color: var(--background);
+    position: relative;
+    background-color: transparent;
     color: var(--foreground);
-    font-family: "Epkaisho", system-ui, sans-serif;
+    font-family: var(--font-body), "Georgia", "Times New Roman", serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+
+  /* Default reading text inside main (hero overrides with utility classes) */
+  main {
+    font-family: var(--font-body), Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
 }
 
-/* Custom container styles for proper centering */
+@layer components {
+  /* Section label — small Cormorant italic */
+  .type-eyebrow {
+    font-family: var(--font-display), Georgia, serif;
+    font-size: 0.875rem;
+    font-style: italic;
+    color: var(--ink-faint);
+    letter-spacing: 0.01em;
+  }
+
+  /* Page / section titles */
+  .type-heading-lg {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .type-heading-xl {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  /* Body copy — Newsreader */
+  .type-body {
+    font-family: var(--font-body), Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  @media (min-width: 768px) {
+    .type-body {
+      font-size: 1.0625rem;
+    }
+  }
+
+  .type-body-muted {
+    font-family: var(--font-body), Georgia, serif;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
+
+  @media (min-width: 768px) {
+    .type-body-muted {
+      font-size: 1rem;
+    }
+  }
+
+  .type-label {
+    font-family: var(--font-body), Georgia, serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    letter-spacing: 0.04em;
+  }
+}
+
+@layer utilities {
+  /* Subtle notebook-style grid on sections */
+  .bg-paper-grid {
+    background-image: radial-gradient(
+      circle,
+      rgba(20, 18, 16, 0.06) 1px,
+      transparent 1px
+    );
+    background-size: 28px 28px;
+  }
+
+  .hr-line {
+    height: 1px;
+    background: rgba(20, 18, 16, 0.12);
+  }
+
+  .hr-ink {
+    height: 1px;
+    background: var(--ink);
+    opacity: 0.85;
+  }
+
+  .font-display {
+    font-family: var(--font-display), "Georgia", "Times New Roman", serif;
+  }
+
+  /* Slight ink bleed on large display type */
+  .ink-display {
+    text-shadow: 0 0.02em 0 rgba(20, 18, 16, 0.08);
+  }
+}
+
+/* Blog prose styles */
+.prose-blog {
+  color: rgba(255,255,255,0.75);
+  font-family: var(--font-body), Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  max-width: 100%;
+}
+
+.prose-blog h2 {
+  font-family: var(--font-brutal), sans-serif;
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose-blog h3 {
+  font-family: var(--font-brutal), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: 0.02em;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-blog p {
+  margin-bottom: 1.5rem;
+}
+
+.prose-blog a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255,255,255,0.3);
+  transition: text-decoration-color 0.2s;
+}
+
+.prose-blog a:hover {
+  text-decoration-color: rgba(255,255,255,0.8);
+}
+
+.prose-blog ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+.prose-blog ul li {
+  padding-left: 1.25rem;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.prose-blog ul li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: rgba(255,255,255,0.3);
+}
+
+.prose-blog ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.prose-blog ol li {
+  margin-bottom: 0.5rem;
+}
+
+.prose-blog pre {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.prose-blog code {
+  font-size: 0.875em;
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.07);
+  padding: 0.15em 0.4em;
+  border-radius: 2px;
+}
+
+.prose-blog pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+  color: rgba(255,255,255,0.8);
+}
+
+.prose-blog blockquote {
+  border-left: 2px solid rgba(255,255,255,0.2);
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  color: rgba(255,255,255,0.6);
+  font-style: italic;
+}
+
+.prose-blog hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin: 2.5rem 0;
+}
+
+.prose-blog strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Legacy dot grid — ink on paper */
+.bg-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(20, 18, 16, 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 32px 32px;
+}
+
+.bg-dot-grid-sm {
+  background-image: radial-gradient(
+    circle,
+    rgba(20, 18, 16, 0.05) 1px,
+    transparent 1px
+  );
+  background-size: 20px 20px;
+}
+
+/* Container styles */
 .container {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
 @media (min-width: 640px) {
   .container {
     max-width: 640px;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
   }
 }
 

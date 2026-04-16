@@ -1,0 +1,138 @@
+import type { AppProject, WorkExperience } from "@/types";
+
+export const projects: AppProject[] = [
+  {
+    id: 1,
+    title: "Muffin App",
+    description:
+      "A food discovery app that recommends meals based on taste preferences.",
+    longDescription:
+      "Muffin is a food discovery app that helps users find their next perfect meal in Los Angeles & Orange County. Instead of relying on star ratings and endless review scrolling, Muffin recommends food nearby that others love based on your specific taste preferences. The app features a simple swipe interface, over 800 unique flavor profiles, and focuses on the food first rather than the restaurant.",
+    technologies: [
+      "React Native",
+      "Expo",
+      "TypeScript",
+      "NestJS",
+      "React Query",
+      "PostgreSQL",
+      "Digital Ocean",
+      "Cloudinary",
+      "Elasticsearch",
+      "OpenAI",
+      "Prisma",
+    ],
+    features: [
+      "Personalized food recommendations based on taste preferences",
+      "Location-based suggestions for nearby restaurants",
+      "Swipe interface to discover new dishes",
+      "Community-driven food recommendations",
+      "Over 800 unique flavor profiles",
+    ],
+    url: "https://muffinapp.io",
+    screenshotUrl: "/images/muffin-screenshot.png",
+    category: "mobile",
+  },
+  {
+    id: 2,
+    title: "Story Discount",
+    description:
+      "A platform connecting businesses with customers through storytelling and QR codes.",
+    longDescription:
+      "Story Discount allows businesses to share their unique stories with customers through QR codes. When customers scan these codes, they learn about the business's journey and mission. After engaging with the story, customers receive a discount — creating deeper connections while incentivizing repeat visits.",
+    technologies: [
+      "Wasp",
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Auth0",
+      "Stripe",
+      "PostgreSQL",
+      "Prisma",
+      "Tailwind CSS",
+    ],
+    features: [
+      "Custom QR code generation for businesses",
+      "Engaging storytelling interface for customers",
+      "Automated discount delivery after story completion",
+      "Business analytics dashboard",
+      "Mobile-optimized scanning experience",
+    ],
+    url: "https://storydiscount.com",
+    screenshotUrl: "/images/story-discount-screenshot.png",
+    category: "web",
+  },
+  {
+    id: 3,
+    title: "Lexcalibur AI",
+    description:
+      "An AI platform that identifies business opportunities from new legislation.",
+    longDescription:
+      "Lexcalibur AI monitors legislative changes across federal and state levels, then uses AI to generate potential business ideas based on new regulations. Users stay ahead of the market and can be first-to-market with solutions that address newly created needs or opportunities.",
+    technologies: [
+      "Next.js",
+      "TypeScript",
+      "React Query",
+      "Pinecone",
+      "PostgreSQL",
+      "Prisma",
+      "Apify",
+      "NestJS",
+      "OpenAI API",
+    ],
+    features: [
+      "AI-powered business idea generation based on new laws",
+      "Potential rating system for business opportunities",
+      "Personalized recommendations based on user interests",
+      "Real-time monitoring of federal and state legislation",
+      "Email and text notifications for urgent updates",
+    ],
+    url: "https://lexcalibur.ai",
+    screenshotUrl: "/images/lexcalibur-screenshot.png",
+    category: "ai",
+  },
+];
+
+export const workExperience: WorkExperience[] = [
+  {
+    id: 1,
+    role: "Software Engineer",
+    company: "Knoxlabs",
+    type: "Contract",
+    period: "May 2025 – Apr 2026",
+    location: "Santa Monica, CA · Remote",
+    description: [
+      "Full-stack web app for a VR hardware order management system (React, TypeScript, NestJS, Supabase)",
+      "Weekly syncs with founder and lead engineer to turn customer interviews into technical requirements",
+      "Shipped UIs and APIs and evolved the database schema with React Query and Prisma",
+    ],
+    technologies: [
+      "React",
+      "TypeScript",
+      "NestJS",
+      "Supabase",
+      "React Query",
+      "Prisma",
+    ],
+  },
+  {
+    id: 2,
+    role: "Co-founder & full-stack engineer",
+    company: "Muffin Technologies",
+    type: "Full-time",
+    period: "Aug 2024 – May 2025",
+    location: "Irvine, CA · On-site",
+    description: [
+      "Front-end–led product work for a food-discovery app, from UI through APIs and data models",
+      "Creative direction: graphic design, illustration, and brand-adjacent visuals alongside engineering",
+      "Collaborated on strategy, operations, and launch efforts for the founding team",
+    ],
+    technologies: [
+      "React Native",
+      "NestJS",
+      "PostgreSQL",
+      "OpenAI",
+      "Elasticsearch",
+      "Prisma",
+    ],
+  },
+];

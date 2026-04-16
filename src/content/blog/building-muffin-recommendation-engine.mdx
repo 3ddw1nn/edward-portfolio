@@ -1,0 +1,66 @@
+---
+title: "Building a Taste-Based Recommendation Engine with OpenAI"
+date: "2025-03-10"
+excerpt: "How we moved beyond star ratings and built a flavor-profile matching system for Muffin using embeddings and 800+ taste vectors."
+tags: ["Engineering", "AI", "React Native"]
+readTime: "6 min read"
+---
+
+Most food apps rank restaurants by stars. Stars are a proxy for quality, but they say nothing about *taste*. A 4.8-star ramen spot and a 4.8-star taco truck are not interchangeable — yet every major platform treats them as if they are.
+
+At Muffin, we wanted to fix that. This post covers how we built a taste-based recommendation engine that matches people to meals, not ratings.
+
+## The core idea
+
+Instead of asking "is this place good?", we ask "does this place match *you*?" The unit of comparison isn't a restaurant — it's a dish. Each dish gets a flavor profile: a vector of attributes like umami, spice, fat, acid, sweetness, and texture. Each user builds a preference vector over time through ratings and swipes.
+
+Recommendation is then just nearest-neighbor search in flavor space.
+
+## Flavor profiles with OpenAI embeddings
+
+We use GPT-4 to extract structured flavor descriptors from unstructured menu text and review data. A prompt like:
+
+```
+Given this dish description and reviews, return a JSON object with these
+flavor attributes scored 0–10: umami, spice, fat, richness, acid, sweetness,
+crunch, freshness.
+
+Dish: "Braised short rib, bone marrow butter, crispy shallots, gremolata"
+```
+
+Returns something like `{ umami: 9, fat: 8, richness: 9, crunch: 6, acid: 4 }`.
+
+We process every dish in our catalog this way and store the vectors in Elasticsearch with dense vector fields.
+
+## User preference vectors
+
+A new user starts with an onboarding flow — 12 swipes on dishes we've pre-selected to span the flavor space. Each swipe updates a running preference vector using a simple weighted average. Over time, explicit ratings and implicit signals (re-orders, time spent on a listing) continue updating the vector.
+
+## Retrieval at query time
+
+When a user opens the app, we run a `knn` query against Elasticsearch:
+
+```json
+{
+  "knn": {
+    "field": "flavor_vector",
+    "query_vector": [0.8, 0.3, 0.7, ...],
+    "k": 20,
+    "num_candidates": 100
+  }
+}
+```
+
+Results are post-filtered by location radius, dietary restrictions, and freshness (we down-rank dishes from places the user has visited in the last 30 days to encourage discovery).
+
+## What we learned
+
+The biggest surprise: **acid is the most polarizing dimension**. Users who love high-acid food (Vietnamese, Peruvian, fermented anything) cluster tightly and are extremely consistent. Users who dislike acid are all over the map on everything else. This one dimension does enormous predictive work.
+
+Star ratings turned out to be almost uncorrelated with retention — people who got accurate taste matches came back regardless of whether the restaurant was "objectively" good. Taste fit > quality signal.
+
+## What's next
+
+We're exploring multi-modal embeddings — using dish photos alongside text to capture visual cues that reviews miss (color, texture, portion size). There's also interesting work to do on contextual preferences: what someone wants for lunch vs. a date vs. a hangover recovery meal is genuinely different, and the model doesn't know that yet.
+
+If you're building something in food-tech or recommendation systems, I'd love to talk.

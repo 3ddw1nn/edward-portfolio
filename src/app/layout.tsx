@@ -1,24 +1,38 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Newsreader, Oswald, Bebas_Neue } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { PostHogProvider } from "@/components/PostHogProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const newsreader = Newsreader({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const cormorant = Cormorant_Garamond({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const oswald = Oswald({
+  variable: "--font-brutal",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const bebasNeue = Bebas_Neue({
+  variable: "--font-hero",
+  subsets: ["latin"],
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
-  title: "Edward Lee - Portfolio",
+  title: "Edward Lee — Software Engineer · Artist · Architect",
   description:
-    "Portfolio website of Edward Lee, showcasing applications, illustrations, and architecture work.",
+    "Portfolio of Edward Lee — full-stack engineer, digital artist, and architectural designer. Past work includes Knoxlabs and Muffin Technologies.",
 };
 
 export default function RootLayout({
@@ -27,15 +41,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable}`}
+      className={`scroll-smooth ${newsreader.variable} ${cormorant.variable} ${oswald.variable} ${bebasNeue.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `history.scrollRestoration = "manual"; window.scrollTo(0, 0);` }} />
+      </head>
       <body
-        className={`antialiased min-h-screen flex flex-col bg-slate-900 text-slate-50`}
+        className="antialiased min-h-screen flex flex-col text-white bg-black"
         suppressHydrationWarning
       >
         <PostHogProvider>
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 font-sans text-ink selection:bg-ink/10 selection:text-ink">
+            {children}
+          </main>
           <Footer />
         </PostHogProvider>
       </body>
