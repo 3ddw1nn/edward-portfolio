@@ -6,16 +6,13 @@ import { Pencil } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
 
-/** Opens /admin with ?edit=slug when a DB-backed post can be edited (same admin cookie as delete). */
+/** Opens /admin with ?edit=slug for logged-in admins. */
 export function EditPostButton({
   slug,
-  canEditFromDb,
   /** Parent already verified admin (e.g. BlogPostAdminToolbar). */
   assumeAdmin = false,
 }: {
   slug: string;
-  /** MDX file posts are edited in the repo, not via PATCH. */
-  canEditFromDb: boolean;
   assumeAdmin?: boolean;
 }) {
   const [isAdmin, setIsAdmin] = useState(assumeAdmin);
@@ -26,7 +23,7 @@ export function EditPostButton({
     setIsAdmin(!!localStorage.getItem(STORAGE_KEY));
   }, [assumeAdmin]);
 
-  if (!isAdmin || !canEditFromDb) return null;
+  if (!isAdmin) return null;
 
   return (
     <button

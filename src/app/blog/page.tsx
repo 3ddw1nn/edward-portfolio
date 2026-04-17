@@ -2,6 +2,10 @@ import { getAllPosts } from "@/lib/blog";
 import { getPostEngagementStats } from "@/lib/engagement";
 import { BlogPageContent } from "./BlogPageContent";
 
+// Cloudflare Pages requires dynamic routes to run on the edge runtime. This
+// page is now dynamic because pagination reads `searchParams`.
+export const runtime = "edge";
+
 export const metadata = {
   title: "Blog — Edward Lee",
   description: "Writing on engineering, design, and the overlap between code and craft.",

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
-import mdxManifest from "@/generated/mdx-post-manifest.json";
 
 export const runtime = "edge";
 
@@ -11,55 +10,11 @@ export type AdminPostRow = {
   date: string;
   excerpt: string;
   tags: string[];
-  source: "mdx" | "supabase";
-};
-
-type MdxManifestEntry = {
-  slug: string;
-  title: string;
-  date: string;
-  excerpt: string;
-  tags?: string[];
 };
 
 function normalizeTags(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter((t): t is string => typeof t === "string" && t.trim().length > 0);
-}
-
-function mergeAdminPosts(
-  mdxPosts: MdxManifestEntry[],
-  dbRows: { id: string; slug: string; title: string; date: string; excerpt: string; tags?: unknown }[]
-): { posts: AdminPostRow[]; hiddenDbDuplicateCount: number } {
-  const mdxSlugs = new Set(mdxPosts.map((p) => p.slug));
-  const dbBySlug = new Map(dbRows.map((r) => [r.slug, r]));
-
-  const dbBacked: AdminPostRow[] = dbRows.map((r) => ({
-    id: r.id,
-    slug: r.slug,
-    title: r.title,
-    date: r.date,
-    excerpt: r.excerpt,
-    tags: normalizeTags(r.tags),
-    source: "supabase" as const,
-  }));
-
-  const mdxOnly: AdminPostRow[] = mdxPosts
-    .filter((p) => !dbBySlug.has(p.slug))
-    .map((p) => ({
-      id: `mdx:${p.slug}`,
-      slug: p.slug,
-      title: p.title,
-      date: p.date,
-      excerpt: p.excerpt,
-      tags: normalizeTags(p.tags),
-      source: "mdx" as const,
-    }));
-
-  const merged = [...dbBacked, ...mdxOnly].sort((a, b) => (a.date < b.date ? 1 : -1));
-  const hiddenDbDuplicateCount = dbRows.filter((r) => mdxSlugs.has(r.slug)).length;
-
-  return { posts: merged, hiddenDbDuplicateCount };
 }
 
 export async function GET(req: NextRequest) {
@@ -75,22 +30,23 @@ export async function GET(req: NextRequest) {
     .order("date", { ascending: false });
 
   if (error) {
-    const { posts } = mergeAdminPosts(mdxManifest.posts as MdxManifestEntry[], []);
     return NextResponse.json({
-      posts,
-      hiddenDbDuplicateCount: 0,
+      posts: [],
       supabaseError: error.message,
     });
   }
 
-  const { posts, hiddenDbDuplicateCount } = mergeAdminPosts(
-    mdxManifest.posts as MdxManifestEntry[],
-    data ?? []
-  );
+  const posts: AdminPostRow[] = (data ?? []).map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    title: r.title,
+    date: r.date,
+    excerpt: r.excerpt,
+    tags: normalizeTags(r.tags),
+  }));
 
   return NextResponse.json({
     posts,
-    hiddenDbDuplicateCount,
     supabaseError: null,
   });
 }

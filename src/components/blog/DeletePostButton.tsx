@@ -9,12 +9,9 @@ const STORAGE_KEY = "admin_pw";
 
 export function DeletePostButton({
   slug,
-  canDeleteFromDb = true,
   assumeAdmin = false,
 }: {
   slug: string;
-  /** File-backed MDX posts cannot be removed from the database UI; delete the .mdx file instead. */
-  canDeleteFromDb?: boolean;
   assumeAdmin?: boolean;
 }) {
   const [isAdmin, setIsAdmin] = useState(assumeAdmin);
@@ -26,7 +23,7 @@ export function DeletePostButton({
     setIsAdmin(!!localStorage.getItem(STORAGE_KEY));
   }, [assumeAdmin]);
 
-  if (!isAdmin || !canDeleteFromDb) return null;
+  if (!isAdmin) return null;
 
   async function confirmDelete() {
     const pw = localStorage.getItem(STORAGE_KEY);

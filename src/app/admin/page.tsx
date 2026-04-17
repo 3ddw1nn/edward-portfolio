@@ -158,7 +158,6 @@ type Post = {
   date: string;
   excerpt: string;
   tags: string[];
-  source: "mdx" | "supabase";
 };
 
 type Comment = {
@@ -215,7 +214,6 @@ export default function AdminPage() {
   const [postsFetchError, setPostsFetchError] = useState("");
   const [postsActionError, setPostsActionError] = useState("");
   const [supabasePostsWarning, setSupabasePostsWarning] = useState<string | null>(null);
-  const [, setHiddenDupCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsPage, setCommentsPage] = useState(1);
   const [commentsPageCount, setCommentsPageCount] = useState(1);
@@ -423,7 +421,6 @@ export default function AdminPage() {
         const j = (await r.json().catch(() => ({}))) as {
           posts?: Post[];
           supabaseError?: string | null;
-          hiddenDbDuplicateCount?: number;
           error?: string;
         };
         if (!r.ok) throw new Error(j.error ?? "Failed to load posts");
@@ -434,9 +431,6 @@ export default function AdminPage() {
           }))
         );
         setSupabasePostsWarning(j.supabaseError ?? null);
-        setHiddenDupCount(
-          typeof j.hiddenDbDuplicateCount === "number" ? j.hiddenDbDuplicateCount : 0
-        );
       })
       .catch((e: unknown) => {
         setPosts([]);
@@ -1181,31 +1175,23 @@ export default function AdminPage() {
                           <ExternalLink className="h-4 w-4" aria-hidden />
                           View
                         </Link>
-                        {post.source === "supabase" ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => loadPostForEdit(post.slug)}
-                              className={`${btnGhost} justify-center border-white/[0.2] bg-white/[0.08] text-sm`}
-                            >
-                              <Pencil className="h-4 w-4" aria-hidden />
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setPendingDeletePost(post)}
-                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
-                              title="Delete from database"
-                            >
-                              <Trash2 className="h-4 w-4" aria-hidden />
-                              Delete
-                            </button>
-                          </>
-                        ) : (
-                          <span className={`${t.meta} rounded-lg border border-white/[0.08] px-3 py-2 text-center text-xs`}>
-                            File-backed — remove the <code className="text-white">.mdx</code> in the repo to drop it.
-                          </span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => loadPostForEdit(post.slug)}
+                          className={`${btnGhost} justify-center border-white/[0.2] bg-white/[0.08] text-sm`}
+                        >
+                          <Pencil className="h-4 w-4" aria-hidden />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPendingDeletePost(post)}
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
+                          title="Delete from database"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden />
+                          Delete
+                        </button>
                       </div>
                     </li>
                   ))}

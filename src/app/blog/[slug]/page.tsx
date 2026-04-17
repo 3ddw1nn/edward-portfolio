@@ -56,7 +56,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
               All posts
             </Link>
-            <BlogPostAdminToolbar slug={slug} source={post.source} />
+            <BlogPostAdminToolbar slug={slug} />
           </div>
 
           {/* Tags */}

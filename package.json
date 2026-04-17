@@ -7,8 +7,6 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "predev": "node scripts/generate-mdx-post-manifest.mjs",
-    "prebuild": "node scripts/generate-mdx-post-manifest.mjs",
     "dev": "next dev",
     "dev:turbo": "next dev --turbo",
     "dev:watch": "next dev",
@@ -16,8 +14,7 @@
     "start": "next start",
     "start:dev": "nodemon --watch 'src/**/*' --ext 'ts,tsx,js,jsx,json' --exec 'next build && next start'",
     "start:watch": "nodemon --watch 'src/**/*' --ext 'ts,tsx,js,jsx,json' --exec 'pnpm build && pnpm start'",
-    "lint": "next lint",
-    "seed:posts": "node --env-file=.env.local scripts/seed-posts-from-mdx.mjs"
+    "lint": "next lint"
   },
   "dependencies": {
     "@giphy/js-fetch-api": "^5.7.0",
@@ -34,7 +31,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.10",
-    "gray-matter": "^4.0.3",
     "lucide-react": "^0.477.0",
     "next": "15.2.1",
     "next-mdx-remote": "^6.0.0",

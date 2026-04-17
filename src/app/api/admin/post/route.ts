@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase";
 
 export const runtime = "edge";
 
-/** Load a single database post for editing (MDX-backed slugs are not in this table). */
+/** Load a single post by slug for editing in the admin form. */
 export async function GET(req: NextRequest) {
   const password = req.headers.get("x-admin-password");
   if (!password || password !== process.env.ADMIN_PASSWORD) {
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   }
   if (!data) {
     return NextResponse.json(
-      { error: "No database post for this slug (MDX files are edited in the repo)." },
+      { error: "No post found for this slug." },
       { status: 404 }
     );
   }
