@@ -3,7 +3,7 @@ import { getPostEngagementStats } from "@/lib/engagement";
 import { BlogPageContent } from "./BlogPageContent";
 
 // Cloudflare Pages requires dynamic routes to run on the edge runtime. This
-// page is now dynamic because pagination reads `searchParams`.
+// page is dynamic because pagination and search read `searchParams`.
 export const runtime = "edge";
 
 export const metadata = {
@@ -16,13 +16,14 @@ const BLOG_PAGE_SIZE = 10;
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string }>;
 }) {
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: qParam } = await searchParams;
   const parsed = Number(pageParam);
   const requestedPage = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+  const q = (qParam ?? "").trim();
 
-  const allPosts = await getAllPosts();
+  const allPosts = await getAllPosts({ q });
   const totalPosts = allPosts.length;
   const pageCount = Math.max(1, Math.ceil(totalPosts / BLOG_PAGE_SIZE));
   const page = Math.min(requestedPage, pageCount);
@@ -41,6 +42,8 @@ export default async function BlogPage({
       engagement={engagement}
       page={page}
       pageCount={pageCount}
+      totalPosts={totalPosts}
+      query={q}
     />
   );
 }

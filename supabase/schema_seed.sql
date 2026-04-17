@@ -15,10 +15,31 @@ create table if not exists public.posts (
   tags text[] not null default '{}',
   date text not null,
   read_time text not null default '5 min read',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create index if not exists posts_date_idx on public.posts (date desc);
+create index if not exists posts_updated_at_idx on public.posts (updated_at desc);
+
+-- Bump updated_at automatically on row modifications so the blog list
+-- can surface recently-edited posts to the top.
+create or replace function public.set_posts_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists posts_set_updated_at on public.posts;
+
+create trigger posts_set_updated_at
+  before update on public.posts
+  for each row
+  execute function public.set_posts_updated_at();
 
 alter table public.posts enable row level security;
 
