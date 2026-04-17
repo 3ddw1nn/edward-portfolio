@@ -24,7 +24,8 @@ const t = {
   label: "text-xs sm:text-sm font-medium text-white tracking-wide",
   meta: "text-xs text-white leading-snug",
   title: "text-base sm:text-lg font-semibold text-white tracking-tight",
-  nav: "text-xs sm:text-sm font-medium text-white",
+  /** Sidebar item label: no text-* so active pill inherits `text-black` from the button */
+  navLabel: "text-xs sm:text-sm font-medium tracking-wide",
   caption: "text-xs text-white",
 };
 
@@ -446,15 +447,15 @@ export default function AdminPage() {
         <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
           <button type="button" onClick={() => setTab("new")} className={btnNav(tab === "new")}>
             <FilePenLine className="h-4 w-4 shrink-0" aria-hidden />
-            <span className={t.nav}>Write</span>
+            <span className={t.navLabel}>Write</span>
           </button>
           <button type="button" onClick={() => setTab("posts")} className={btnNav(tab === "posts")}>
             <Newspaper className="h-4 w-4 shrink-0" aria-hidden />
-            <span className={t.nav}>Posts</span>
+            <span className={t.navLabel}>Posts</span>
           </button>
           <button type="button" onClick={() => setTab("comments")} className={btnNav(tab === "comments")}>
             <MessageSquareText className="h-4 w-4 shrink-0" aria-hidden />
-            <span className={t.nav}>Comments</span>
+            <span className={t.navLabel}>Comments</span>
           </button>
         </nav>
 
