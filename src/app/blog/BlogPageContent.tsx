@@ -51,21 +51,12 @@ export function BlogPageContent({
 
         {/* Text — staggered slide up */}
         <div className="relative z-[2] container mx-auto px-4 md:px-6 pb-14 md:pb-20">
-          <motion.p
-            className="font-sans text-base md:text-lg text-white/55 tracking-wide mb-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
-          >
-            Writing
-          </motion.p>
-
           <div className="overflow-hidden">
             <motion.h1
               className="font-brutal font-semibold text-5xl md:text-8xl text-white tracking-tight leading-none mb-6"
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
               Blog
             </motion.h1>
@@ -75,14 +66,14 @@ export function BlogPageContent({
             className="h-px max-w-xs bg-white/25 mb-6"
             initial={{ scaleX: 0, originX: 0 }}
             animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.9, ease: "easeOut" }}
+            transition={{ duration: 0.8, delay: 0.75, ease: "easeOut" }}
           />
 
           <motion.p
             className="font-sans text-white/60 leading-relaxed max-w-md text-sm md:text-base"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0, ease: "easeOut" }}
+            transition={{ duration: 0.6, delay: 0.85, ease: "easeOut" }}
           >
             Notes on engineering, design systems, mobile development, and the overlap between code and craft.
           </motion.p>
@@ -96,7 +87,7 @@ export function BlogPageContent({
             key={post.slug}
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1.1 + i * 0.1, ease: "easeOut" }}
+            transition={{ duration: 0.5, delay: 0.95 + i * 0.1, ease: "easeOut" }}
           >
             <Link
               href={`/blog/${post.slug}`}
