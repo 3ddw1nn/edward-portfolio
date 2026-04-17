@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { PostMeta } from "@/lib/blog";
+import type { PostEngagement } from "@/lib/engagement";
+import { Heart, MessageCircle } from "lucide-react";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -13,7 +15,13 @@ function formatDate(dateStr: string) {
   });
 }
 
-export function BlogPageContent({ posts }: { posts: PostMeta[] }) {
+export function BlogPageContent({
+  posts,
+  engagement,
+}: {
+  posts: PostMeta[];
+  engagement: Record<string, PostEngagement>;
+}) {
   return (
     <div className="w-full min-h-screen bg-black text-white font-sans">
 
@@ -120,6 +128,25 @@ export function BlogPageContent({ posts }: { posts: PostMeta[] }) {
                 <span className="font-brutal text-[10px] tracking-[0.15em] uppercase text-white/35">
                   {post.readTime}
                 </span>
+                {(() => {
+                  const e = engagement[post.slug] ?? {
+                    commentCount: 0,
+                    likeCount: 0,
+                    liked: false,
+                  };
+                  return (
+                    <div className="flex items-center gap-3 font-brutal text-[10px] tracking-[0.12em] uppercase text-white/40">
+                      <span className="inline-flex items-center gap-1" title="Comments">
+                        <MessageCircle className="h-3.5 w-3.5 text-white/35" aria-hidden />
+                        {e.commentCount}
+                      </span>
+                      <span className="inline-flex items-center gap-1" title="Likes">
+                        <Heart className="h-3.5 w-3.5 text-white/35" aria-hidden />
+                        {e.likeCount}
+                      </span>
+                    </div>
+                  );
+                })()}
                 <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 hidden sm:block" />
               </div>
             </Link>
