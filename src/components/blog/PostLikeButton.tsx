@@ -82,19 +82,18 @@ export function PostLikeButton({ slug, initialLikeCount, size = "inline" }: Prop
         onClick={toggle}
         disabled={loading || pending}
         className={cn(
-          "inline-flex items-center gap-2 font-brutal uppercase tracking-wide transition-colors disabled:opacity-50",
+          "inline-flex items-center font-brutal uppercase tracking-wide transition-colors disabled:opacity-50",
           hero
-            ? "rounded-md border border-white/10 bg-white/[0.02] px-3 py-2 text-[10px] tracking-[0.12em] text-white/50 hover:border-white/16 hover:bg-white/[0.04] hover:text-white/70"
-            : "rounded-md border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
+            ? "gap-2.5 rounded-md border border-white/10 bg-white/[0.02] px-3.5 py-2.5 text-[11px] tracking-[0.12em] text-white/50 hover:border-white/16 hover:bg-white/[0.04] hover:text-white/70"
+            : "gap-2 rounded-md border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
         )}
         aria-pressed={liked}
         aria-label={liked ? "Unlike this post" : "Like this post"}
       >
         <Heart
           className={cn(
-            "shrink-0 transition-colors",
-            hero ? "h-3.5 w-3.5" : "h-4 w-4",
-            liked ? "fill-red-400 text-red-400" : "text-white/40"
+            "h-4 w-4 shrink-0 transition-colors",
+            liked ? "fill-red-400 text-red-400" : hero ? "text-white/40" : "text-white/50"
           )}
         />
         <span className={hero ? "text-white/45" : "text-[10px] text-white/45"}>
