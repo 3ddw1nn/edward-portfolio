@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 
+export const runtime = "edge";
+
 function isMissingOptionalColumns(message?: string | null) {
   const text = (message ?? "").toLowerCase();
   return (

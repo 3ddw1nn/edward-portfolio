@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const password = req.headers.get("x-admin-password");
   if (!password || password !== process.env.ADMIN_PASSWORD) {

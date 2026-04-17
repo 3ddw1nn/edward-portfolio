@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 
+export const runtime = "edge";
+
 function slugify(title: string): string {
   return title
     .toLowerCase()
