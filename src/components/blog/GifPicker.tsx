@@ -29,6 +29,11 @@ export function GifPicker({
   const [tab, setTab]               = useState<Tab>("GIFs");
   const [query, setQuery]           = useState("");
   const [width, setWidth]           = useState(440);
+  const [isMobile, setIsMobile]     = useState(false);
+  // Visual-viewport metrics track the *visible* area on mobile (i.e. with the
+  // soft keyboard subtracted). We use these to keep the sheet pinned above
+  // the keyboard and sized to fit what the user can actually see.
+  const [vv, setVv]                 = useState<{ h: number; bottomInset: number } | null>(null);
   const containerRef                = useRef<HTMLDivElement>(null);
   const inputRef                    = useRef<HTMLInputElement>(null);
   const debouncedQuery              = useDebounce(query, 400);
@@ -49,6 +54,39 @@ export function GifPicker({
       ro.disconnect();
       window.removeEventListener("resize", update);
       window.removeEventListener("orientationchange", update);
+    };
+  }, []);
+
+  // Track which breakpoint we're at so we can opt mobile-only styles in/out.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Follow the visual viewport on mobile so the sheet sits above the soft
+  // keyboard instead of getting buried by it. On iOS `position: fixed` uses
+  // the layout viewport (full screen), so we convert visualViewport metrics
+  // into a bottom inset + a max-height that matches what's actually visible.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const viewport = window.visualViewport;
+    const update = () => {
+      const bottomInset = Math.max(
+        0,
+        window.innerHeight - (viewport.offsetTop + viewport.height)
+      );
+      setVv({ h: viewport.height, bottomInset });
+    };
+    update();
+    viewport.addEventListener("resize", update);
+    viewport.addEventListener("scroll", update);
+    return () => {
+      viewport.removeEventListener("resize", update);
+      viewport.removeEventListener("scroll", update);
     };
   }, []);
 
@@ -123,15 +161,26 @@ export function GifPicker({
         ref={containerRef}
         className={[
           // ── Mobile: fixed full-width bottom sheet, safe from keyboard ──
-          "fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))]",
-          "max-h-[min(70vh,32rem)] flex flex-col",
+          "fixed inset-x-2 flex flex-col",
+          // Fallback bottom + height in case visualViewport isn't available.
+          "bottom-[max(0.5rem,env(safe-area-inset-bottom))] max-h-[min(55vh,24rem)]",
           // ── Desktop (sm+): restore the original anchored dropdown ──
           "sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:mb-2",
           "sm:w-[460px] sm:max-w-[calc(100vw-2rem)] sm:max-h-none",
           // ── Chrome ──
           "bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl z-50 overflow-hidden",
         ].join(" ")}
-        style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
+        style={{
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          // Mobile only: lift the sheet above the soft keyboard and cap its
+          // height to ~55% of the actually-visible viewport (capped at 22rem).
+          ...(isMobile && vv
+            ? {
+                bottom: `calc(${vv.bottomInset}px + max(0.5rem, env(safe-area-inset-bottom)))`,
+                maxHeight: `${Math.min(vv.h * 0.55, 352)}px`,
+              }
+            : {}),
+        }}
         role="dialog"
         aria-modal="true"
         aria-label="GIF picker"
