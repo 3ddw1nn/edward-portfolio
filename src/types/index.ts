@@ -6,6 +6,7 @@ export type Skill = {
 export type AppProject = {
   id: number;
   title: string;
+  year: string;
   description: string;
   longDescription: string;
   technologies: string[];

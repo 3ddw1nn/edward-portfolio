@@ -44,7 +44,7 @@ export function BlogPageContent({ posts }: { posts: PostMeta[] }) {
         {/* Text — staggered slide up */}
         <div className="relative z-[2] container mx-auto px-4 md:px-6 pb-14 md:pb-20">
           <motion.p
-            className="font-display italic text-base md:text-lg text-white/55 tracking-wide mb-2"
+            className="font-sans text-base md:text-lg text-white/55 tracking-wide mb-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
@@ -99,7 +99,7 @@ export function BlogPageContent({ posts }: { posts: PostMeta[] }) {
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/40 border border-white/15 px-2 py-0.5"
+                      className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/40 border border-white/15 rounded-md px-2 py-0.5"
                     >
                       {tag}
                     </span>

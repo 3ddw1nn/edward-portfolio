@@ -2,8 +2,38 @@ import type { AppProject, WorkExperience } from "@/types";
 
 export const projects: AppProject[] = [
   {
+    id: 4,
+    title: "Knoxlabs VR Partner Portal",
+    year: "2025-2026",
+    description:
+      "A partner-facing portal for managing VR headset orders, logistics, and support workflows.",
+    longDescription:
+      "The Knoxlabs VR Partner Portal is a full-stack internal platform built for enterprise and education partners purchasing VR hardware at scale. It centralizes order tracking, account operations, and fulfillment workflows so teams can manage partner requests in one place with clear status visibility.",
+    technologies: [
+      "React",
+      "TypeScript",
+      "NestJS",
+      "Supabase",
+      "React Query",
+      "Prisma",
+      "Shopify",
+      "GCP",
+    ],
+    features: [
+      "Partner account dashboard with role-based access",
+      "Order lifecycle tracking from request to fulfillment",
+      "Operational views for support and logistics teams",
+      "Status-driven workflows for partner requests",
+      "Centralized data model for orders, partners, and updates",
+    ],
+    url: "https://dashboard.knoxlabs.com/",
+    screenshotUrl: "/images/knoxlabs-screenshot.png",
+    category: "web",
+  },
+  {
     id: 1,
     title: "Muffin App",
+    year: "2025",
     description:
       "A food discovery app that recommends meals based on taste preferences.",
     longDescription:
@@ -29,12 +59,13 @@ export const projects: AppProject[] = [
       "Over 800 unique flavor profiles",
     ],
     url: "https://muffinapp.io",
-    screenshotUrl: "/images/muffin-screenshot.png",
+    screenshotUrl: "/images/muffin-screenshot3.png",
     category: "mobile",
   },
   {
     id: 2,
     title: "Story Discount",
+    year: "2025",
     description:
       "A platform connecting businesses with customers through storytelling and QR codes.",
     longDescription:
@@ -64,6 +95,7 @@ export const projects: AppProject[] = [
   {
     id: 3,
     title: "Lexcalibur AI",
+    year: "2025",
     description:
       "An AI platform that identifies business opportunities from new legislation.",
     longDescription:

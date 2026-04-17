@@ -42,7 +42,7 @@ export function ImageModal({ isOpen, onClose, image }: ImageModalProps) {
           onClick={onClose}
         >
           <button
-            className="absolute top-4 right-4 z-50 p-2 border border-white/15 text-white/50 hover:text-white hover:border-white/40 transition-colors duration-200"
+            className="absolute top-4 right-4 z-50 p-2 rounded-md border border-white/15 text-white/50 hover:text-white hover:border-white/40 transition-colors duration-200"
             onClick={onClose}
             aria-label="Close"
           >
@@ -58,7 +58,7 @@ export function ImageModal({ isOpen, onClose, image }: ImageModalProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Image */}
-            <div className="relative w-full md:w-3/4 h-[60vh] md:h-[80vh] overflow-hidden border border-white/10 bg-zinc-900">
+            <div className="relative w-full md:w-3/4 h-[60vh] md:h-[80vh] overflow-hidden rounded-lg border border-white/10 bg-zinc-900">
               <div
                 className="w-full h-full"
                 style={{
@@ -71,7 +71,7 @@ export function ImageModal({ isOpen, onClose, image }: ImageModalProps) {
             </div>
 
             {/* Info panel */}
-            <div className="w-full md:w-1/4 bg-black border border-white/10 p-6 space-y-5 font-sans text-white">
+            <div className="w-full md:w-1/4 bg-black border border-white/10 rounded-lg p-6 space-y-5 font-sans text-white">
               <div>
                 <h2 className="font-brutal font-semibold text-xl text-white mb-3">{image.title}</h2>
                 <div className="h-px w-8 bg-white/30" />

@@ -46,7 +46,7 @@ function SkillBox({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
-      className="border border-white/12 rounded-sm bg-white/[0.02] p-5 md:p-7"
+      className="border border-white/12 rounded-lg bg-white/[0.02] p-5 md:p-7"
     >
       <p className="font-brutal text-sm tracking-[0.2em] uppercase text-white/35 mb-5">
         {label}
@@ -71,7 +71,7 @@ export function SkillsShowcase() {
           transition={{ duration: 0.5 }}
           className="mb-14"
         >
-          <p className="font-display italic text-lg md:text-xl text-white/55 tracking-wide">
+          <p className="font-sans text-lg md:text-xl text-white/55 tracking-wide">
             Capabilities
           </p>
           <h2 className="font-brutal font-semibold text-6xl md:text-8xl mt-2 text-white tracking-tight leading-none">

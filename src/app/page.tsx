@@ -82,7 +82,7 @@ function FeaturedWorkSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
-          className="font-display italic text-base md:text-lg text-white/55 tracking-wide mb-4"
+          className="font-sans text-base md:text-lg text-white/55 tracking-wide mb-4"
         >
           Featured Project
         </motion.p>
@@ -95,7 +95,7 @@ function FeaturedWorkSection() {
           <div className="h-px mb-12 max-w-xs bg-white/25" />
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border border-white/10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 border border-white/10 rounded-lg overflow-hidden">
           {/* Image */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -105,7 +105,7 @@ function FeaturedWorkSection() {
             className="relative aspect-[4/3] lg:aspect-auto lg:min-h-[480px] bg-zinc-900 overflow-hidden order-1 lg:order-2"
           >
             <Image
-              src="/images/muffin-screenshot.png"
+              src="/images/muffin-screenshot3.png"
               alt="Muffin App"
               fill
               className="object-contain object-center"
@@ -133,7 +133,7 @@ function FeaturedWorkSection() {
               {["React Native", "NestJS", "PostgreSQL", "OpenAI", "Elasticsearch"].map((t) => (
                 <span
                   key={t}
-                  className="font-brutal text-[10px] tracking-[0.1em] uppercase text-white/45 border border-white/15 px-2.5 py-1"
+                  className="font-brutal text-[10px] tracking-[0.1em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1"
                 >
                   {t}
                 </span>
@@ -154,17 +154,11 @@ function FeaturedWorkSection() {
 
 function ProfileSection() {
   const details = [
-    { label: "Focus", value: "Full-stack product development, UI, and systems" },
-    {
-      label: "Now",
-      value: "Open to full-time and contract engineering roles",
-      emphasis: true,
-    },
-    {
-      label: "Education",
-      value: "Pratt Institute · California College of the Arts",
-    },
+    { label: "Started", value: "Fine art & illustration, then self-taught architecture and code" },
+    { label: "Built", value: "Mobile apps, production dashboards, full-stack web products" },
+    { label: "Education", value: "Pratt Institute · California College of the Arts" },
     { label: "Based in", value: "Los Angeles, CA" },
+    { label: "Now", value: "Open to full-time and contract engineering roles", emphasis: true },
   ];
 
   return (
@@ -182,7 +176,7 @@ function ProfileSection() {
           transition={{ duration: 0.5 }}
           className="mb-14"
         >
-          <p className="font-display italic text-base md:text-lg text-white/55 tracking-wide">About</p>
+          <p className="font-sans text-base md:text-lg text-white/55 tracking-wide">About</p>
           <h2 className="font-brutal font-semibold text-4xl md:text-5xl mt-2 text-white tracking-tight">Profile</h2>
           <div className="h-px mt-6 max-w-xs bg-white/25" />
         </motion.div>
@@ -193,21 +187,23 @@ function ProfileSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="space-y-6 rounded-sm border border-white/15 bg-black/40 p-6 md:p-8 backdrop-blur-sm"
+            className="space-y-6 rounded-lg border border-white/15 bg-black/40 p-6 md:p-8 backdrop-blur-sm"
           >
             <p className="font-sans text-lg md:text-xl leading-relaxed text-white">
-              I&apos;m Edward Lee — engineer, artist, and designer.{" "}
-              <span className="text-white/70">I like work that sits at the intersection of craft and clarity.</span>
+              I&apos;m Edward Lee — a self-taught engineer with a background in fine art and architectural design.
             </p>
-            <p className="font-sans text-white/70 leading-relaxed">
-              I started with drawing and architecture, then went deep on code and product. Recent
-              roles include contract engineering at Knoxlabs and founding-team work at Muffin;
-              details are in the experience section above.
+            <p className="font-sans text-white/75 leading-relaxed">
+              I started in art, developing an eye for composition, proportion, and detail. From there I taught myself architectural drafting and designed residential homes. Then, before AI made it easy, I taught myself to code from scratch — built and published a full mobile application, shipped client websites, and engineered the infrastructure dashboard that Knoxlabs still runs on today.
             </p>
-            <div className="border-l-[3px] border-white/30 pl-4 py-0.5">
-              <p className="font-sans text-base md:text-lg italic text-white/90 leading-relaxed">
-                &ldquo;I make things that work beautifully, not just beautiful things that
-                work.&rdquo;
+            <p className="font-sans text-white/75 leading-relaxed">
+              That path — artist to architect to engineer — shapes how I build. I don&apos;t separate aesthetics from function. Every product I touch is designed to feel as good as it works.
+            </p>
+            <div className="border-l-[3px] border-white/25 pl-5 py-1">
+              <p className="font-sans text-lg md:text-xl text-white leading-relaxed">
+                &ldquo;Any information. Three clicks. No exceptions.&rdquo;
+              </p>
+              <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/35 mt-2">
+                The three-click rule — my design north star
               </p>
             </div>
             <div className="flex flex-wrap gap-3 pt-2">
@@ -215,7 +211,7 @@ function ProfileSection() {
                 href="/Edward_Lee_Software_Engineer_Resume.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-brutal text-xs tracking-[0.2em] font-medium px-6 py-3 border border-white/50 text-white hover:bg-white hover:text-black transition-colors duration-200 uppercase"
+                className="font-brutal text-xs tracking-[0.2em] font-medium px-6 py-3 rounded-md border border-white/50 text-white hover:bg-white hover:text-black transition-colors duration-200 uppercase"
               >
                 View Resume
               </a>
@@ -228,7 +224,7 @@ function ProfileSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <dl className="space-y-0 border border-white/15 rounded-sm overflow-hidden divide-y divide-white/10 bg-black/40 backdrop-blur-sm">
+            <dl className="space-y-0 border border-white/15 rounded-lg overflow-hidden divide-y divide-white/10 bg-black/40 backdrop-blur-sm">
               {details.map(({ label, value, emphasis }) => (
                 <div key={label} className="px-5 py-4 sm:grid sm:grid-cols-3 sm:gap-4 md:py-5">
                   <dt className="font-brutal text-xs sm:col-span-1 mb-1 sm:mb-0 font-semibold text-white/60 uppercase tracking-widest">
@@ -271,7 +267,7 @@ function ContactSection() {
   };
 
   const inputBase =
-    "w-full bg-white/10 border border-white/25 px-3 py-3 font-brutal text-sm tracking-wide text-white placeholder:text-white/50 focus:outline-none focus:bg-white/15 focus:border-white/60 transition-colors duration-200";
+    "w-full bg-white/10 border border-white/25 rounded-md px-3 py-3 font-brutal text-sm tracking-wide text-white placeholder:text-white/50 focus:outline-none focus:bg-white/15 focus:border-white/60 transition-colors duration-200";
 
   const socialLinks = [
     { icon: Linkedin, href: "https://www.linkedin.com/in/edventuretech/", label: "LinkedIn" },
@@ -294,7 +290,7 @@ function ContactSection() {
           transition={{ duration: 0.5 }}
           className="mb-14"
         >
-          <p className="font-display italic text-base md:text-lg text-white/55 tracking-wide">Contact</p>
+          <p className="font-sans text-base md:text-lg text-white/55 tracking-wide">Contact</p>
           <h2 className="font-brutal font-semibold text-4xl md:text-5xl mt-2 text-white tracking-tight">Get in touch</h2>
           <div className="h-px mt-6 max-w-xs bg-white/25" />
         </motion.div>
@@ -309,7 +305,7 @@ function ContactSection() {
             className="lg:col-span-3 order-2 lg:order-1"
           >
             {isSubmitted && (
-              <div className="border border-white/20 bg-white/5 px-5 py-4 mb-8 font-brutal text-sm tracking-wide flex items-center gap-2">
+              <div className="border border-white/20 bg-white/5 rounded-md px-5 py-4 mb-8 font-brutal text-sm tracking-wide flex items-center gap-2">
                 <span className="inline-block h-1.5 w-1.5 bg-white rounded-full shrink-0" />
                 Thanks — I&apos;ll get back to you soon.
               </div>
@@ -335,7 +331,7 @@ function ContactSection() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 font-brutal text-xs tracking-[0.2em] uppercase px-7 py-3.5 bg-white text-black hover:bg-white/90 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 font-brutal text-xs tracking-[0.2em] uppercase px-7 py-3.5 rounded-md bg-white text-black hover:bg-white/90 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Sending…" : <><span>Send</span><Send className="h-3.5 w-3.5" /></>}
               </button>
@@ -350,7 +346,7 @@ function ContactSection() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="lg:col-span-2 space-y-6 order-1 lg:order-2"
           >
-            <div className="border border-white/15 bg-black/40 backdrop-blur-sm p-6 space-y-4">
+            <div className="border border-white/15 bg-black/40 backdrop-blur-sm rounded-lg p-6 space-y-4">
               <div className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/50">Email</div>
               <a href="mailto:ehleedev@gmail.com" className="flex items-center gap-3 group">
                 <Mail className="h-4 w-4 text-white/40 group-hover:text-white transition-colors" />
@@ -358,7 +354,7 @@ function ContactSection() {
               </a>
             </div>
 
-            <div className="border border-white/15 bg-black/40 backdrop-blur-sm p-6 space-y-4">
+            <div className="border border-white/15 bg-black/40 backdrop-blur-sm rounded-lg p-6 space-y-4">
               <div className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/50">Social</div>
               <div className="space-y-3">
                 {socialLinks.map(({ icon: Icon, href, label }) => (
@@ -370,7 +366,7 @@ function ContactSection() {
               </div>
             </div>
 
-            <div className="border border-white/15 bg-black/40 backdrop-blur-sm p-6">
+            <div className="border border-white/15 bg-black/40 backdrop-blur-sm rounded-lg p-6">
               <div className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/50 mb-3">Availability</div>
               <div className="flex items-center gap-2.5">
                 <span className="inline-block h-1.5 w-1.5 bg-white rounded-full animate-pulse" />

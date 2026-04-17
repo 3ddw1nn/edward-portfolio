@@ -31,7 +31,7 @@ export default function ApplicationsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <p className="font-display italic text-base md:text-lg text-white/55 tracking-wide">
+            <p className="font-sans text-base md:text-lg text-white/55 tracking-wide">
               Applications
             </p>
             <h1 className="font-brutal font-semibold text-5xl md:text-7xl mt-2 text-white tracking-tight leading-none">
@@ -62,9 +62,14 @@ export default function ApplicationsPage() {
 
                 {/* Copy */}
                 <div className="space-y-7 order-2 lg:order-1 flex flex-col justify-center">
-                  <span className="inline-block font-brutal text-[10px] tracking-[0.2em] uppercase text-white/45 border border-white/15 px-2.5 py-1 self-start">
-                    {categoryLabel[project.category]}
-                  </span>
+                  <div className="flex items-center gap-2 self-start">
+                    <span className="inline-block font-brutal text-[10px] tracking-[0.2em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1">
+                      {categoryLabel[project.category]}
+                    </span>
+                    <span className="inline-block font-brutal text-[10px] tracking-[0.2em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1">
+                      {project.year}
+                    </span>
+                  </div>
 
                   <div>
                     <h2 className="font-brutal font-semibold text-3xl md:text-4xl text-white tracking-tight mb-3">
@@ -81,7 +86,7 @@ export default function ApplicationsPage() {
                       {project.technologies.map((tech) => (
                         <span
                           key={tech}
-                          className="font-brutal text-[10px] tracking-[0.1em] uppercase text-white/45 border border-white/15 px-2.5 py-1"
+                          className="font-brutal text-[10px] tracking-[0.1em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1"
                         >
                           {tech}
                         </span>
@@ -107,7 +112,7 @@ export default function ApplicationsPage() {
                     href={project.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 font-brutal text-xs tracking-[0.2em] uppercase px-6 py-3 bg-white text-black hover:bg-transparent hover:text-white border border-white transition-colors duration-200 self-start"
+                    className="inline-flex items-center gap-2 font-brutal text-xs tracking-[0.2em] uppercase px-6 py-3 rounded-md bg-white text-black hover:bg-transparent hover:text-white border border-white transition-colors duration-200 self-start"
                   >
                     Visit site <ExternalLink className="h-3.5 w-3.5" />
                   </a>
@@ -115,12 +120,14 @@ export default function ApplicationsPage() {
 
                 {/* Image */}
                 <div className="order-1 lg:order-2">
-                  <div className="relative aspect-[4/3] border border-white/10 overflow-hidden group bg-zinc-900">
+                  <div className="relative aspect-[4/3] border border-white/10 rounded-lg overflow-hidden group bg-zinc-900">
                     <Image
                       src={project.screenshotUrl}
                       alt={project.title}
                       fill
-                      className="object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                      className={`object-cover group-hover:scale-105 transition-transform duration-700 ${
+                        project.title === "Knoxlabs VR Partner Portal" ? "object-left-top" : "object-top"
+                      }`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                   </div>
