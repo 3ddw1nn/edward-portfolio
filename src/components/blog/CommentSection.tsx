@@ -321,12 +321,13 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   function renderComment(comment: Comment, isReply = false) {
     const replies = repliesByParent[comment.id] ?? [];
     const isThreadExpanded = !!expandedThreads[comment.id];
-    const guideIndentClass = isReply ? "ml-28" : "ml-14";
+    // Tighter indents on mobile so long names + GIFs don't get squeezed.
+    const guideIndentClass = isReply ? "ml-14 sm:ml-28" : "ml-8 sm:ml-14";
 
     return (
       <div key={comment.id}>
         <div
-          className={`group flex gap-4 px-4 py-2 rounded-md hover:bg-white/[0.03] transition-colors duration-100 relative ${isReply ? "ml-14" : ""}`}
+          className={`group flex gap-3 sm:gap-4 px-2 sm:px-4 py-2 rounded-md hover:bg-white/[0.03] transition-colors duration-100 relative ${isReply ? "ml-8 sm:ml-14" : ""}`}
           onMouseEnter={() => setHoveredId(comment.id)}
           onMouseLeave={() => setHoveredId(null)}
         >
@@ -335,16 +336,20 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2 mb-0.5">
-              <span className="text-[15px] font-semibold text-white leading-none">
-                {comment.name || FALLBACK_DISPLAY_NAME}
-              </span>
-              <span className="text-[11px] text-[#949ba4]">
-                {formatTime(comment.created_at)}
-              </span>
+            {/* Header: on mobile, name and timestamp stack on two lines with
+                Reply pinned to the right; on sm+ they all sit on one row. */}
+            <div className="flex items-start justify-between gap-2 mb-0.5">
+              <div className="min-w-0 flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+                <span className="text-[15px] font-semibold text-white leading-tight truncate">
+                  {comment.name || FALLBACK_DISPLAY_NAME}
+                </span>
+                <span className="text-[11px] text-[#949ba4] leading-tight whitespace-nowrap">
+                  {formatTime(comment.created_at)}
+                </span>
+              </div>
               <button
                 onClick={() => handleReply(comment)}
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-[#949ba4] hover:text-[#84a7ff] hover:bg-[#84a7ff]/10 transition-colors"
+                className="shrink-0 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-[#949ba4] hover:text-[#84a7ff] hover:bg-[#84a7ff]/10 transition-colors"
                 title="Reply"
               >
                 <MessageCircleReply className="h-3.5 w-3.5" />
@@ -489,7 +494,7 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
       </div>
 
       {/* Message input — Discord style */}
-      <div className="px-4 pb-4">
+      <div className="px-2 sm:px-4 pb-4">
         {errorMsg && (
           <p className="text-xs text-red-400 mb-2 px-1">{errorMsg}</p>
         )}
@@ -515,14 +520,15 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
           </div>
         )}
 
-        {/* Name input — always visible */}
+        {/* Name input — always visible. Uses 16px on mobile so iOS Safari
+            doesn't auto-zoom when it receives focus. */}
         <input
           type="text"
           placeholder="Your name (optional)"
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={80}
-          className="w-full bg-[#1e1f22] border border-[#3f4147] rounded-lg px-3 py-2 text-sm text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none focus:border-[#5865f2] transition-colors mb-2"
+          className="w-full bg-[#1e1f22] border border-[#3f4147] rounded-lg px-2.5 sm:px-3 py-2 text-base sm:text-sm text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none focus:border-[#5865f2] transition-colors mb-2"
         />
 
         {replyTarget && (
@@ -548,7 +554,8 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
 
         {/* Main input box */}
         <div className="flex items-end gap-0 bg-[#383a40] rounded-lg">
-          {/* Textarea */}
+          {/* Textarea — 16px on mobile (Safari auto-zoom threshold),
+              15px on desktop to match the rest of the comment typography. */}
           <textarea
             ref={textareaRef}
             placeholder={replyTarget ? `Reply to @${replyTarget.name}` : `Message as ${name || FALLBACK_DISPLAY_NAME}`}
@@ -557,12 +564,12 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
             onKeyDown={handleKeyDown}
             maxLength={2000}
             rows={1}
-            className="flex-1 bg-transparent text-[15px] text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none resize-none py-2.5 pl-3 leading-relaxed overflow-hidden"
+            className="flex-1 bg-transparent text-base sm:text-[15px] text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none resize-none py-2.5 pl-2.5 sm:pl-3 leading-relaxed overflow-hidden"
             style={{ maxHeight: "200px" }}
           />
 
           {/* Right toolbar */}
-          <div className="shrink-0 flex h-full items-center gap-2 px-3 py-2.5">
+          <div className="shrink-0 flex h-full items-center gap-2 px-2 sm:px-3 py-2.5">
             {/* GIF button */}
             <div className="relative">
               <button
