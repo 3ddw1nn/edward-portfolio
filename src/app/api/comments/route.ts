@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { combinedCommentText, isProfane, PROFANITY_COMMENT_WARNING } from "@/lib/profanity";
 
 export const runtime = "edge";
 
@@ -128,6 +129,15 @@ export async function POST(req: NextRequest) {
 
   const safeReplyToId = reply_to_id?.trim() || null;
   const safeReplyToName = reply_to_name?.trim() || null;
+
+  const profanityCheck = combinedCommentText({
+    name,
+    body: text,
+    reply_to_name: safeReplyToName,
+  });
+  if (profanityCheck.trim() && isProfane(profanityCheck)) {
+    return NextResponse.json({ error: PROFANITY_COMMENT_WARNING }, { status: 400 });
+  }
 
   // Use admin client to bypass RLS when inserting
   const admin = createAdminClient();

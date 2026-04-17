@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, KeyboardEvent } from "react";
 import { Heart, MessageCircleReply, Trash2, X } from "lucide-react";
 import { getOrCreateBlogVisitorId } from "@/lib/blogVisitor";
+import { combinedCommentText, isProfane, PROFANITY_COMMENT_WARNING } from "@/lib/profanity";
 import Image from "next/image";
 import { GifPicker } from "./GifPicker";
 
@@ -181,6 +182,17 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
     if (submitting || (!body.trim() && !selectedGif)) return;
     setSubmitting(true);
     setErrorMsg("");
+
+    const profanitySource = combinedCommentText({
+      name: name.trim() || null,
+      body: body.trim() || null,
+      reply_to_name: replyTarget?.name ?? null,
+    });
+    if (profanitySource.trim() && isProfane(profanitySource)) {
+      setErrorMsg(PROFANITY_COMMENT_WARNING);
+      setSubmitting(false);
+      return;
+    }
 
     const res = await fetch("/api/comments", {
       method: "POST",
