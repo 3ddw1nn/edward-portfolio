@@ -33,6 +33,10 @@ export const metadata: Metadata = {
   title: "Edward Lee — Software Engineer · Artist · Architect",
   description:
     "Portfolio of Edward Lee — full-stack engineer, digital artist, and architectural designer. Past work includes Knoxlabs and Muffin Technologies.",
+  icons: {
+    icon: [{ url: "/favicon.ico", type: "image/x-icon", sizes: "any" }],
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
