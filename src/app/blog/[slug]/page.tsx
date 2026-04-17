@@ -120,12 +120,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             source={post.content}
             components={{
               img: (props: ImgHTMLAttributes<HTMLImageElement>) => (
-                // eslint-disable-next-line @next/next/no-img-element -- remote blog uploads (Supabase etc.)
-                <img
-                  {...props}
-                  alt={props.alt ?? ""}
-                  className="my-8 max-w-full h-auto rounded-lg border border-white/10"
-                />
+                <figure className="not-prose my-10 mx-auto w-full max-w-xl md:max-w-2xl">
+                  <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900/50 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.85)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- remote blog uploads (Supabase etc.) */}
+                    <img
+                      {...props}
+                      alt={props.alt ?? ""}
+                      className="mx-auto block h-auto w-full max-w-full object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                </figure>
               ),
             }}
           />
