@@ -14,6 +14,8 @@ export type AppProject = {
   url: string;
   screenshotUrl: string;
   category: "web" | "mobile" | "ai";
+  /** Extra pills next to category + year (e.g. “AI platform” for a web app that is also AI). */
+  badgeLabels?: string[];
 };
 
 export type Illustration = {

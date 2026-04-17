@@ -60,6 +60,7 @@ export const projects: AppProject[] = [
     url: "https://github.com/3ddw1nn/content-farmer",
     screenshotUrl: "/images/contentfarmer-screenshot.png",
     category: "web",
+    badgeLabels: ["AI platform"],
   },
   {
     id: 1,

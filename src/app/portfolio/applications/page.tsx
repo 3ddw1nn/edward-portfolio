@@ -62,10 +62,18 @@ export default function ApplicationsPage() {
 
                 {/* Copy */}
                 <div className="space-y-7 order-2 lg:order-1 flex flex-col justify-center">
-                  <div className="flex items-center gap-2 self-start">
+                  <div className="flex flex-wrap items-center gap-2 self-start">
                     <span className="inline-block font-brutal text-[10px] tracking-[0.2em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1">
                       {categoryLabel[project.category]}
                     </span>
+                    {project.badgeLabels?.map((label) => (
+                      <span
+                        key={label}
+                        className="inline-block font-brutal text-[10px] tracking-[0.2em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1"
+                      >
+                        {label}
+                      </span>
+                    ))}
                     <span className="inline-block font-brutal text-[10px] tracking-[0.2em] uppercase text-white/45 border border-white/15 rounded-sm px-2.5 py-1">
                       {project.year}
                     </span>
