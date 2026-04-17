@@ -1,5 +1,6 @@
--- Run in Supabase SQL Editor (Dashboard → SQL → New query).
--- Stores one like per visitor per post. Your API uses the service role, so RLS stays locked.
+-- REQUIRED for post like button: run once in Supabase SQL Editor (Dashboard → SQL → New query).
+-- If you skip this, POST /api/engagement/like returns 503 until the table exists.
+-- Stores one like per visitor per post. API uses the service role; RLS enabled with no anon policies.
 
 create table if not exists public.post_likes (
   id uuid primary key default gen_random_uuid(),

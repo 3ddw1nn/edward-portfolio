@@ -36,14 +36,25 @@ export async function POST(req: NextRequest) {
     .eq("visitor_id", visitorId)
     .maybeSingle();
 
+  function likeHttpStatus(message: string) {
+    if (/post_likes|schema cache|does not exist/i.test(message)) return 503;
+    return 500;
+  }
+
   if (findError) {
-    return NextResponse.json({ error: findError.message }, { status: 500 });
+    return NextResponse.json(
+      { error: findError.message },
+      { status: likeHttpStatus(findError.message) }
+    );
   }
 
   if (existing?.id) {
     const { error: delError } = await admin.from("post_likes").delete().eq("id", existing.id);
     if (delError) {
-      return NextResponse.json({ error: delError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: delError.message },
+        { status: likeHttpStatus(delError.message) }
+      );
     }
   } else {
     const { error: insError } = await admin.from("post_likes").insert({
@@ -51,7 +62,10 @@ export async function POST(req: NextRequest) {
       visitor_id: visitorId,
     });
     if (insError) {
-      return NextResponse.json({ error: insError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: insError.message },
+        { status: likeHttpStatus(insError.message) }
+      );
     }
   }
 

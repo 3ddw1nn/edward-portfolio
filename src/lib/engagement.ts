@@ -22,25 +22,33 @@ export async function getPostEngagementStats(
   const admin = createAdminClient();
   const base = emptyStats(unique, false);
 
-  const [{ data: commentRows }, { data: likeRows }, { data: myLikes }] = await Promise.all([
+  const [commentRes, likeRes, mineRes] = await Promise.all([
     admin.from("comments").select("post_slug").in("post_slug", unique),
     admin.from("post_likes").select("post_slug").in("post_slug", unique),
     visitorId
       ? admin.from("post_likes").select("post_slug").eq("visitor_id", visitorId).in("post_slug", unique)
-      : Promise.resolve({ data: null as { post_slug: string }[] | null }),
+      : Promise.resolve({ data: [] as { post_slug: string }[] | null, error: null }),
   ]);
 
-  for (const row of commentRows ?? []) {
+  if (commentRes.error) {
+    throw new Error(commentRes.error.message);
+  }
+
+  const commentRows = commentRes.data ?? [];
+  const likeRows = likeRes.error ? [] : (likeRes.data ?? []);
+  const myLikes = mineRes.error ? [] : (mineRes.data ?? []);
+
+  for (const row of commentRows) {
     const slug = row.post_slug;
     if (slug && slug in base) base[slug].commentCount += 1;
   }
 
-  for (const row of likeRows ?? []) {
+  for (const row of likeRows) {
     const slug = row.post_slug;
     if (slug && slug in base) base[slug].likeCount += 1;
   }
 
-  for (const row of myLikes ?? []) {
+  for (const row of myLikes) {
     const slug = row.post_slug;
     if (slug && slug in base) base[slug].liked = true;
   }
