@@ -282,19 +282,6 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
                 <MessageCircleReply className="h-3.5 w-3.5" />
                 <span>Reply</span>
               </button>
-              <button
-                type="button"
-                onClick={() => void toggleCommentLike(comment.id)}
-                disabled={pendingLikeId === comment.id}
-                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-[#949ba4] hover:text-red-300 hover:bg-red-400/10 transition-colors disabled:opacity-50"
-                title={comment.liked ? "Unlike" : "Like"}
-                aria-pressed={comment.liked}
-              >
-                <Heart
-                  className={`h-3.5 w-3.5 shrink-0 ${comment.liked ? "fill-red-400 text-red-400" : ""}`}
-                />
-                <span className="tabular-nums">{comment.like_count}</span>
-              </button>
             </div>
             {comment.reply_to_name && (
               <p className="mb-1 text-[11px] text-[#949ba4]">
@@ -318,6 +305,22 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
                 />
               </div>
             )}
+            <div className="mt-2.5 flex items-center">
+              <button
+                type="button"
+                onClick={() => void toggleCommentLike(comment.id)}
+                disabled={pendingLikeId === comment.id}
+                className="inline-flex items-center gap-1.5 rounded-md border border-[#3f4147] bg-[#1e1f22]/80 px-2.5 py-1.5 text-[11px] text-[#b5bac1] transition-colors hover:border-red-400/40 hover:bg-red-400/5 hover:text-red-200 disabled:opacity-50"
+                title={comment.liked ? "Unlike" : "Like"}
+                aria-pressed={comment.liked}
+              >
+                <Heart
+                  className={`h-3.5 w-3.5 shrink-0 ${comment.liked ? "fill-red-400 text-red-400" : "text-[#949ba4]"}`}
+                />
+                <span className="tabular-nums font-medium">{comment.like_count}</span>
+                <span className="text-[#6d6f78]">{comment.like_count === 1 ? "like" : "likes"}</span>
+              </button>
+            </div>
           </div>
 
           {hoveredId === comment.id && isAdmin && (

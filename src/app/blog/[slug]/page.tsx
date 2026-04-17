@@ -105,7 +105,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <MessageCircle className="h-3.5 w-3.5" />
               {engagement.commentCount} comment{engagement.commentCount === 1 ? "" : "s"}
             </div>
-            <PostLikeButton slug={slug} initialLikeCount={engagement.likeCount} />
           </div>
         </div>
       </div>
@@ -115,6 +114,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="prose-blog">
           <MDXRemote source={post.content} />
         </div>
+
+        <section className="mt-16 border-t border-white/10 pt-12" aria-label="Post reactions">
+          <p className="text-center font-brutal text-[10px] uppercase tracking-[0.25em] text-white/40">
+            Enjoyed this post?
+          </p>
+          <div className="mt-5 flex justify-center">
+            <PostLikeButton slug={slug} initialLikeCount={engagement.likeCount} size="hero" />
+          </div>
+        </section>
 
         {/* Comments */}
         <CommentSection postSlug={slug} />
