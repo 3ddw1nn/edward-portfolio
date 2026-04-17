@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
-const store = typeof window !== "undefined" ? localStorage : null;
+const FALLBACK_DISPLAY_NAME = "Mystery Goblin";
 
 function slugify(title: string) {
   return title
@@ -352,7 +352,7 @@ export default function AdminPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-3 mb-1">
-                      <span className="font-brutal text-xs text-white">{c.name || "Anonymous"}</span>
+                      <span className="font-brutal text-xs text-white">{c.name || FALLBACK_DISPLAY_NAME}</span>
                       <span className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/25">
                         {c.post_slug} · {new Date(c.created_at).toLocaleDateString()}
                       </span>

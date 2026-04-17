@@ -307,7 +307,7 @@ export function Hero() {
                 Artist
               </motion.h1>
               <motion.span
-                className="font-display italic text-[#e04545] leading-none drop-shadow-md"
+                className="font-hero text-[#e04545] leading-none drop-shadow-md"
                 style={{ fontSize: "clamp(2.25rem, 9vw, 6rem)" }}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -358,7 +358,7 @@ export function Hero() {
               >
                 <Link
                   href="/#contact"
-                  className="inline-flex items-center justify-center rounded-full border border-white/85 px-6 md:px-8 py-2.5 md:py-3 font-brutal text-xs md:text-base tracking-[0.2em] text-white uppercase hover:bg-white hover:text-black transition-colors duration-300 whitespace-nowrap"
+                  className="inline-flex items-center justify-center rounded-md border border-white/85 px-6 md:px-8 py-2.5 md:py-3 font-brutal text-xs md:text-base tracking-[0.2em] text-white uppercase hover:bg-white hover:text-black transition-colors duration-300 whitespace-nowrap"
                 >
                   Contact me
                 </Link>
