@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, Clock, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MessageCircle } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { getPostBySlug, getMdxSlugs } from "@/lib/blog";
+import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { DeletePostButton } from "@/components/blog/DeletePostButton";
+import { PostLikeButton } from "@/components/blog/PostLikeButton";
 
 export async function generateStaticParams() {
   return getMdxSlugs().map((slug) => ({ slug }));
@@ -39,6 +41,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   } catch {
     notFound();
   }
+
+  const engagement = await getSinglePostEngagement(slug, null);
 
   return (
     <div className="w-full min-h-screen bg-black text-white">
@@ -86,16 +90,22 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           )}
 
           {/* Meta row */}
-          <div className="flex items-center gap-5 pt-6 border-t border-white/10">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-6 border-t border-white/10">
             <div className="flex items-center gap-1.5 text-xs text-white/50">
               <Calendar className="h-3.5 w-3.5" />
               {formatDate(post.date)}
             </div>
-            <div className="w-px h-3 bg-white/15" />
+            <div className="w-px h-3 bg-white/15 hidden sm:block" />
             <div className="flex items-center gap-1.5 text-xs text-white/50">
               <Clock className="h-3.5 w-3.5" />
               {post.readTime}
             </div>
+            <div className="w-px h-3 bg-white/15 hidden sm:block" />
+            <div className="flex items-center gap-1.5 text-xs text-white/50">
+              <MessageCircle className="h-3.5 w-3.5" />
+              {engagement.commentCount} comment{engagement.commentCount === 1 ? "" : "s"}
+            </div>
+            <PostLikeButton slug={slug} initialLikeCount={engagement.likeCount} />
           </div>
         </div>
       </div>
