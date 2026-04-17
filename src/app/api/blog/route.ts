@@ -66,6 +66,61 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ post: data }, { status: 201 });
 }
 
+export async function PATCH(req: NextRequest) {
+  const password = req.headers.get("x-admin-password");
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: {
+    slug?: string;
+    title?: string;
+    excerpt?: string;
+    content?: string;
+    tags?: string[];
+    read_time?: string;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { slug, title, excerpt, content, tags, read_time } = body;
+  if (!slug || !title || !content) {
+    return NextResponse.json(
+      { error: "slug, title, and content are required" },
+      { status: 400 }
+    );
+  }
+
+  const publishedDate = new Date().toISOString().slice(0, 10);
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("posts")
+    .update({
+      title,
+      excerpt: excerpt ?? "",
+      content,
+      tags: tags ?? [],
+      read_time: read_time ?? "5 min read",
+      date: publishedDate,
+    })
+    .eq("slug", slug)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!data) {
+    return NextResponse.json({ error: "No post found with that slug" }, { status: 404 });
+  }
+
+  return NextResponse.json({ post: data });
+}
+
 export async function DELETE(req: NextRequest) {
   const password = req.headers.get("x-admin-password");
   if (!password || password !== process.env.ADMIN_PASSWORD) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { ImagePlus, Pencil, Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
 const FALLBACK_DISPLAY_NAME = "Mystery Goblin";
@@ -53,10 +53,15 @@ export default function AdminPage() {
   const [imageUploadError, setImageUploadError] = useState("");
   const [postStatus, setPostStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [postError, setPostError]   = useState("");
+  /** When set, the New post form PATCHes this slug and refreshes `date` to today on save. */
+  const [editingSlug, setEditingSlug] = useState<string | null>(null);
+  const [successLinkSlug, setSuccessLinkSlug] = useState<string | null>(null);
+  const [lastSaveWasEdit, setLastSaveWasEdit] = useState(false);
 
   // Manage
   const [posts, setPosts]       = useState<Post[]>([]);
   const [postsFetchError, setPostsFetchError] = useState("");
+  const [postsActionError, setPostsActionError] = useState("");
   const [supabasePostsWarning, setSupabasePostsWarning] = useState<string | null>(null);
   const [hiddenDupCount, setHiddenDupCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -69,8 +74,9 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
+    if (editingSlug) return;
     setSlug(slugify(title));
-  }, [title]);
+  }, [title, editingSlug]);
 
   function storedPw() {
     return localStorage.getItem(STORAGE_KEY) ?? pw;
@@ -96,6 +102,7 @@ export default function AdminPage() {
     if (!authed || tab !== "posts") return;
     setLoadingPosts(true);
     setPostsFetchError("");
+    setPostsActionError("");
     fetch("/api/admin/posts", {
       headers: { "x-admin-password": storedPw() },
     })
@@ -144,7 +151,64 @@ export default function AdminPage() {
     });
     if (res.ok) {
       setPosts((prev) => prev.filter((p) => p.slug !== post.slug));
+      if (editingSlug === post.slug) cancelEditDraft();
     }
+  }
+
+  function cancelEditDraft() {
+    setEditingSlug(null);
+    setSuccessLinkSlug(null);
+    setLastSaveWasEdit(false);
+    setPostStatus("idle");
+    setPostError("");
+    setTitle("");
+    setSlug("");
+    setExcerpt("");
+    setTags("");
+    setReadTime("5 min read");
+    setContent("");
+    setDate(new Date().toISOString().slice(0, 10));
+  }
+
+  async function loadPostForEdit(postSlug: string) {
+    setPostStatus("idle");
+    setPostError("");
+    setPostsActionError("");
+    setSuccessLinkSlug(null);
+    setLastSaveWasEdit(false);
+    const res = await fetch(`/api/admin/post?slug=${encodeURIComponent(postSlug)}`, {
+      headers: { "x-admin-password": storedPw() ?? "" },
+    });
+    const json = (await res.json().catch(() => ({}))) as {
+      post?: {
+        slug: string;
+        title: string;
+        excerpt: string;
+        content: string;
+        tags: string[];
+        read_time: string;
+        date: string;
+      };
+      error?: string;
+    };
+    if (!res.ok) {
+      setPostsActionError(json.error ?? "Could not load post");
+      return;
+    }
+    const p = json.post;
+    if (!p) {
+      setPostsActionError("Could not load post");
+      return;
+    }
+    setEditingSlug(p.slug);
+    setTitle(p.title);
+    setSlug(p.slug);
+    setExcerpt(p.excerpt ?? "");
+    setTags(Array.isArray(p.tags) ? p.tags.join(", ") : "");
+    setReadTime(p.read_time ?? "5 min read");
+    setDate(p.date);
+    setContent(p.content ?? "");
+    setTab("new");
   }
 
   async function handleBlogImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -219,20 +283,48 @@ export default function AdminPage() {
 
     setPostStatus("saving");
     setPostError("");
+    setSuccessLinkSlug(null);
 
-    const res = await fetch("/api/blog", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-password": storedPw(),
-      },
-      body: JSON.stringify({
-        title, slug, excerpt, content,
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-        date,
-        read_time: readTime,
-      }),
-    });
+    const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const viewSlug = editingSlug ?? slug;
+
+    const res = editingSlug
+      ? await fetch("/api/blog", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": storedPw() ?? "",
+          },
+          body: JSON.stringify({
+            slug: editingSlug,
+            title,
+            excerpt,
+            content,
+            tags: tagList,
+            read_time: readTime,
+          }),
+        })
+      : await fetch("/api/blog", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": storedPw() ?? "",
+          },
+          body: JSON.stringify({
+            title,
+            slug,
+            excerpt,
+            content,
+            tags: tagList,
+            date,
+            read_time: readTime,
+          }),
+        });
+
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      post?: { date?: string; slug?: string };
+    };
 
     if (res.status === 401) {
       signOut();
@@ -241,16 +333,30 @@ export default function AdminPage() {
     }
 
     if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
       setPostError(json.error ?? "Something went wrong");
       setPostStatus("error");
       return;
     }
 
+    const wasEditing = editingSlug !== null;
+    const nextDate = json.post?.date ?? new Date().toISOString().slice(0, 10);
+    const nextSlug = json.post?.slug ?? viewSlug;
+
+    setSuccessLinkSlug(nextSlug);
+    setLastSaveWasEdit(wasEditing);
     setPostStatus("success");
-    setTitle(""); setSlug(""); setExcerpt(""); setTags("");
-    setReadTime("5 min read"); setContent("");
-    setDate(new Date().toISOString().slice(0, 10));
+    setEditingSlug(null);
+    if (wasEditing) {
+      setDate(nextDate);
+    } else {
+      setTitle("");
+      setSlug("");
+      setExcerpt("");
+      setTags("");
+      setReadTime("5 min read");
+      setContent("");
+      setDate(new Date().toISOString().slice(0, 10));
+    }
   }
 
   // ── Auth gate ─────────────────────────────────────────────────────────────
@@ -313,11 +419,30 @@ export default function AdminPage() {
       {/* ── Tab: New post ── */}
       {tab === "new" && (
         <form onSubmit={handleSubmit} className="space-y-5">
-          {postStatus === "success" && (
+          {editingSlug && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border border-white/15 px-4 py-3 bg-white/[0.03]">
+              <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/55">
+                Editing <span className="text-white">{editingSlug}</span>
+                <span className="block font-sans normal-case text-[11px] text-white/35 mt-1 tracking-normal">
+                  Saving sets the post date to today on the blog index.
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={cancelEditDraft}
+                className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/40 hover:text-white border border-white/15 px-3 py-2"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+          {postStatus === "success" && successLinkSlug && (
             <div className="border border-white/20 px-4 py-3">
               <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/60">
-                Published.{" "}
-                <Link href={`/blog/${slug}`} className="underline">View post →</Link>
+                {lastSaveWasEdit ? "Saved — date set to today on the blog." : "Published."}{" "}
+                <Link href={`/blog/${successLinkSlug}`} className="underline">
+                  View post →
+                </Link>
               </p>
             </div>
           )}
@@ -332,8 +457,14 @@ export default function AdminPage() {
               className={INPUT} placeholder="Post title" />
           </Field>
           <Field label="Slug">
-            <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)}
-              className={INPUT} placeholder="auto-generated" />
+            <input
+              type="text"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              readOnly={!!editingSlug}
+              className={`${INPUT} ${editingSlug ? "opacity-60 cursor-not-allowed" : ""}`}
+              placeholder="auto-generated"
+            />
           </Field>
           <Field label="Excerpt">
             <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={2}
@@ -348,8 +479,14 @@ export default function AdminPage() {
             <Field label="Read time">
               <input type="text" value={readTime} onChange={(e) => setReadTime(e.target.value)} className={INPUT} />
             </Field>
-            <Field label="Date">
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={INPUT} />
+            <Field label={editingSlug ? "Date (set on save)" : "Date"}>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                disabled={!!editingSlug}
+                className={`${INPUT} ${editingSlug ? "opacity-60 cursor-not-allowed" : ""}`}
+              />
             </Field>
           </div>
 
@@ -400,7 +537,13 @@ export default function AdminPage() {
             disabled={postStatus === "saving"}
             className="border border-white/30 px-8 py-3 font-brutal text-[11px] tracking-[0.25em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {postStatus === "saving" ? "Publishing..." : "Publish"}
+            {postStatus === "saving"
+              ? editingSlug
+                ? "Saving..."
+                : "Publishing..."
+              : editingSlug
+                ? "Save changes"
+                : "Publish"}
           </button>
         </form>
       )}
@@ -408,6 +551,11 @@ export default function AdminPage() {
       {/* ── Tab: Manage posts ── */}
       {tab === "posts" && (
         <div>
+          {postsActionError && (
+            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400 mb-4">
+              {postsActionError}
+            </p>
+          )}
           {postsFetchError && (
             <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400 mb-4">
               {postsFetchError}
@@ -451,14 +599,25 @@ export default function AdminPage() {
                       View
                     </Link>
                     {post.source === "supabase" ? (
-                      <button
-                        type="button"
-                        onClick={() => deletePost(post)}
-                        className="text-white/20 hover:text-red-400 transition-colors"
-                        title="Delete post from database"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => loadPostForEdit(post.slug)}
+                          className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/30 hover:text-white transition-colors inline-flex items-center gap-1"
+                          title="Edit in admin"
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deletePost(post)}
+                          className="text-white/20 hover:text-red-400 transition-colors"
+                          title="Delete post from database"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
                     ) : (
                       <span
                         className="font-brutal text-[8px] tracking-[0.15em] uppercase text-white/15 max-w-[7rem] text-right leading-tight"
