@@ -449,7 +449,7 @@ export default function AdminPage() {
         <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
           <button type="button" onClick={() => setTab("new")} className={btnNav(tab === "new")}>
             <FilePenLine className="h-4 w-4 shrink-0" aria-hidden />
-            <span className={t.navLabel}>Write</span>
+            <span className={t.navLabel}>Create Post</span>
           </button>
           <button type="button" onClick={() => setTab("posts")} className={btnNav(tab === "posts")}>
             <Newspaper className="h-4 w-4 shrink-0" aria-hidden />
@@ -664,7 +664,7 @@ export default function AdminPage() {
               ) : posts.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/[0.2] bg-black/25 px-6 py-12 text-center">
                   <p className={`${t.body}`}>
-                    No posts yet. Run <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">supabase/schema_seed.sql</code> in Supabase, then publish from Write — or add optional <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">.mdx</code> files under{" "}
+                    No posts yet. Run <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">supabase/schema_seed.sql</code> in Supabase, then publish from Create Post — or add optional <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">.mdx</code> files under{" "}
                     <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">src/content/blog</code>.
                   </p>
                 </div>
