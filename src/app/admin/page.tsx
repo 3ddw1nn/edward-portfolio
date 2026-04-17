@@ -3,10 +3,41 @@
 import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { AdminEditFromUrl } from "./AdminEditFromUrl";
-import { ImagePlus, Pencil, Trash2 } from "lucide-react";
+import {
+  ExternalLink,
+  FilePenLine,
+  ImagePlus,
+  LayoutDashboard,
+  LogOut,
+  MessageSquareText,
+  Newspaper,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
 const FALLBACK_DISPLAY_NAME = "Mystery Goblin";
+
+/** Body copy: 14px+; small UI chrome: 12px minimum */
+const t = {
+  body: "text-sm sm:text-base text-white leading-relaxed",
+  label: "text-xs sm:text-sm font-medium text-white tracking-wide",
+  meta: "text-xs text-white leading-snug",
+  title: "text-base sm:text-lg font-semibold text-white tracking-tight",
+  nav: "text-xs sm:text-sm font-medium text-white",
+  caption: "text-xs text-white",
+};
+
+const card =
+  "rounded-2xl border border-white/[0.12] bg-zinc-950/70 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.85)] backdrop-blur-md";
+const inputClass =
+  "w-full min-h-[44px] rounded-xl border border-white/[0.14] bg-black/50 px-4 py-3 text-sm sm:text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/25 focus:border-white/25";
+const btnGhost =
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.14] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08] hover:border-white/25";
+const btnPrimary =
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-white bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:border-zinc-500 disabled:bg-zinc-500 disabled:text-zinc-900";
+const btnNav = (active: boolean) =>
+  `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition ${active ? "bg-white text-black shadow-lg shadow-black/30" : "text-white hover:bg-white/[0.06]"}`;
 
 function slugify(title: string) {
   return title
@@ -34,39 +65,38 @@ type Comment = {
   created_at: string;
 };
 
+type Tab = "new" | "posts" | "comments";
+
 export default function AdminPage() {
-  const [pw, setPw]         = useState("");
+  const [pw, setPw] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState("");
-  const [tab, setTab]       = useState<"new" | "posts" | "comments">("new");
+  const [tab, setTab] = useState<Tab>("new");
 
-  // New post form
-  const [title, setTitle]       = useState("");
-  const [slug, setSlug]         = useState("");
-  const [excerpt, setExcerpt]   = useState("");
-  const [tags, setTags]         = useState("");
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [tags, setTags] = useState("");
   const [readTime, setReadTime] = useState("5 min read");
-  const [date, setDate]         = useState(new Date().toISOString().slice(0, 10));
-  const [content, setContent]   = useState("");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [content, setContent] = useState("");
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [imageUploadState, setImageUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [imageUploadError, setImageUploadError] = useState("");
   const [postStatus, setPostStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
-  const [postError, setPostError]   = useState("");
-  /** When set, the New post form PATCHes this slug and refreshes `date` to today on save. */
+  const [postError, setPostError] = useState("");
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [successLinkSlug, setSuccessLinkSlug] = useState<string | null>(null);
   const [lastSaveWasEdit, setLastSaveWasEdit] = useState(false);
 
-  // Manage
-  const [posts, setPosts]       = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [postsFetchError, setPostsFetchError] = useState("");
   const [postsActionError, setPostsActionError] = useState("");
   const [supabasePostsWarning, setSupabasePostsWarning] = useState<string | null>(null);
   const [hiddenDupCount, setHiddenDupCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [loadingPosts, setLoadingPosts]       = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
 
   useEffect(() => {
@@ -96,8 +126,6 @@ export default function AdminPage() {
     setAuthed(false);
     setPw("");
   }
-
-  // ── Fetch posts / comments when switching to manage tabs ─────────────────
 
   useEffect(() => {
     if (!authed || tab !== "posts") return;
@@ -140,8 +168,6 @@ export default function AdminPage() {
       .finally(() => setLoadingComments(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed, tab]);
-
-  // ── Delete post ───────────────────────────────────────────────────────────
 
   async function deletePost(post: Post) {
     if (post.source === "mdx") return;
@@ -268,8 +294,6 @@ export default function AdminPage() {
     setImageUploadState("idle");
   }
 
-  // ── Delete comment ────────────────────────────────────────────────────────
-
   async function deleteComment(id: string) {
     const res = await fetch(`/api/comments?id=${id}`, {
       method: "DELETE",
@@ -279,8 +303,6 @@ export default function AdminPage() {
       setComments((prev) => prev.filter((c) => c.id !== id));
     }
   }
-
-  // ── Submit new post ───────────────────────────────────────────────────────
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -352,7 +374,6 @@ export default function AdminPage() {
     setPostStatus("success");
     setEditingSlug(null);
     setPostError("");
-    // Blank “new post” form after any successful save (create or edit).
     setTitle("");
     setSlug("");
     setExcerpt("");
@@ -363,342 +384,421 @@ export default function AdminPage() {
     setTab("new");
   }
 
-  // ── Auth gate ─────────────────────────────────────────────────────────────
-
   if (!authed) {
     return (
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <form onSubmit={handleAuth} className="w-full max-w-sm space-y-4">
-          <p className="font-brutal text-[10px] tracking-[0.3em] uppercase text-white/40 mb-6">Admin access</p>
-          <input
-            type="password"
-            placeholder="Password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            className="w-full bg-white/5 border border-white/15 px-4 py-3 font-brutal text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/40"
-            autoFocus
-          />
-          {authError && (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400">{authError}</p>
-          )}
-          <button
-            type="submit"
-            className="w-full border border-white/30 px-4 py-3 font-brutal text-[11px] tracking-[0.25em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200"
-          >
-            Enter
-          </button>
-        </form>
+      <div className="flex min-h-screen items-center justify-center px-4 py-16">
+        <div className={`w-full max-w-md ${card} p-8 sm:p-10`}>
+          <div className="mb-8 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-black">
+              <LayoutDashboard className="h-6 w-6" aria-hidden />
+            </div>
+            <div>
+              <h1 className={t.title}>Admin</h1>
+              <p className={`${t.meta} mt-1`}>Sign in to manage posts and comments.</p>
+            </div>
+          </div>
+          <form onSubmit={handleAuth} className="space-y-5">
+            <div>
+              <label htmlFor="admin-pw" className={`mb-2 block ${t.label}`}>
+                Password
+              </label>
+              <input
+                id="admin-pw"
+                type="password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                className={inputClass}
+                placeholder="Enter password"
+                autoFocus
+              />
+            </div>
+            {authError && (
+              <p className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+                {authError}
+              </p>
+            )}
+            <button type="submit" className={`${btnPrimary} w-full`}>
+              Continue
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
 
-  // ── Dashboard ─────────────────────────────────────────────────────────────
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <Suspense fallback={null}>
         <AdminEditFromUrl authed={authed} loadPostForEdit={loadPostForEdit} />
       </Suspense>
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between mb-10">
-        <div className="flex items-center gap-6">
-          {(["new", "posts", "comments"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`font-brutal text-[10px] tracking-[0.25em] uppercase transition-colors duration-200 ${
-                tab === t ? "text-white" : "text-white/30 hover:text-white/60"
-              }`}
-            >
-              {t === "new" ? "New post" : t === "posts" ? "Manage posts" : "Comments"}
-            </button>
-          ))}
+      <aside className="shrink-0 border-b border-white/[0.1] bg-zinc-950/80 px-4 py-5 lg:w-64 lg:border-b-0 lg:border-r lg:px-5 lg:py-8">
+        <div className="mb-6 flex items-center gap-3 lg:mb-10">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-black">
+            <LayoutDashboard className="h-5 w-5" aria-hidden />
+          </div>
+          <div>
+            <p className={`${t.caption} font-semibold uppercase tracking-widest`}>Dashboard</p>
+            <p className={`${t.title} text-lg`}>Content</p>
+          </div>
         </div>
-        <button
-          onClick={signOut}
-          className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/25 hover:text-white/60 transition-colors"
-        >
-          Sign out
-        </button>
-      </div>
 
-      {/* ── Tab: New post ── */}
-      {tab === "new" && (
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {editingSlug && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border border-white/15 px-4 py-3 bg-white/[0.03]">
-              <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/55">
-                Editing <span className="text-white">{editingSlug}</span>
-                <span className="block font-sans normal-case text-[11px] text-white/35 mt-1 tracking-normal">
-                  Saving sets the post date to today on the blog index.
-                </span>
-              </p>
-              <button
-                type="button"
-                onClick={cancelEditDraft}
-                className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/40 hover:text-white border border-white/15 px-3 py-2"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-          {postStatus === "success" && successLinkSlug && (
-            <div className="border border-white/20 px-4 py-3">
-              <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/60">
-                {lastSaveWasEdit ? "Saved — date set to today on the blog." : "Published."}{" "}
-                <Link href={`/blog/${successLinkSlug}`} className="underline">
-                  View post →
-                </Link>
-              </p>
-            </div>
-          )}
-          {postStatus === "error" && (
-            <div className="border border-red-500/30 px-4 py-3">
-              <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400">{postError}</p>
-            </div>
-          )}
-
-          <Field label="Title *">
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required
-              className={INPUT} placeholder="Post title" />
-          </Field>
-          <Field label="Slug">
-            <input
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              readOnly={!!editingSlug}
-              className={`${INPUT} ${editingSlug ? "opacity-60 cursor-not-allowed" : ""}`}
-              placeholder="auto-generated"
-            />
-          </Field>
-          <Field label="Excerpt">
-            <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={2}
-              className={`${INPUT} resize-none`} placeholder="Short description shown on the blog index" />
-          </Field>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Field label="Tags (comma-sep)">
-              <input type="text" value={tags} onChange={(e) => setTags(e.target.value)}
-                className={INPUT} placeholder="engineering, design" />
-            </Field>
-            <Field label="Read time">
-              <input type="text" value={readTime} onChange={(e) => setReadTime(e.target.value)} className={INPUT} />
-            </Field>
-            <Field label={editingSlug ? "Date (set on save)" : "Date"}>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                disabled={!!editingSlug}
-                className={`${INPUT} ${editingSlug ? "opacity-60 cursor-not-allowed" : ""}`}
-              />
-            </Field>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-brutal text-[9px] tracking-[0.25em] uppercase text-white/35">
-                Images
-              </span>
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={handleBlogImageChange}
-              />
-              <button
-                type="button"
-                disabled={imageUploadState === "uploading"}
-                onClick={() => imageInputRef.current?.click()}
-                className="inline-flex items-center gap-2 border border-white/20 px-3 py-2 font-brutal text-[9px] tracking-[0.2em] uppercase text-white/70 hover:text-white hover:border-white/40 transition-colors disabled:opacity-40"
-              >
-                <ImagePlus className="h-3.5 w-3.5" />
-                {imageUploadState === "uploading" ? "Uploading…" : "Upload & insert"}
-              </button>
-              <span className="font-sans text-[11px] text-white/35">
-                Inserts markdown at the cursor (Supabase bucket <code className="text-white/50">blog-images</code>).
-              </span>
-            </div>
-            {imageUploadState === "error" && imageUploadError && (
-              <p className="font-brutal text-[9px] uppercase text-red-400">{imageUploadError}</p>
-            )}
-          </div>
-
-          <Field label="Content (markdown) *">
-            <textarea
-              ref={contentRef}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              rows={24}
-              className={`${INPUT} font-mono resize-y leading-relaxed`}
-              placeholder="Write your post in Markdown..."
-            />
-          </Field>
-
-          <button
-            type="submit"
-            disabled={postStatus === "saving"}
-            className="border border-white/30 px-8 py-3 font-brutal text-[11px] tracking-[0.25em] uppercase text-white hover:bg-white hover:text-black transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {postStatus === "saving"
-              ? editingSlug
-                ? "Saving..."
-                : "Publishing..."
-              : editingSlug
-                ? "Save changes"
-                : "Publish"}
+        <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
+          <button type="button" onClick={() => setTab("new")} className={btnNav(tab === "new")}>
+            <FilePenLine className="h-4 w-4 shrink-0" aria-hidden />
+            <span className={t.nav}>Write</span>
           </button>
-        </form>
-      )}
+          <button type="button" onClick={() => setTab("posts")} className={btnNav(tab === "posts")}>
+            <Newspaper className="h-4 w-4 shrink-0" aria-hidden />
+            <span className={t.nav}>Posts</span>
+          </button>
+          <button type="button" onClick={() => setTab("comments")} className={btnNav(tab === "comments")}>
+            <MessageSquareText className="h-4 w-4 shrink-0" aria-hidden />
+            <span className={t.nav}>Comments</span>
+          </button>
+        </nav>
 
-      {/* ── Tab: Manage posts ── */}
-      {tab === "posts" && (
-        <div>
-          {postsActionError && (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400 mb-4">
-              {postsActionError}
-            </p>
-          )}
-          {postsFetchError && (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400 mb-4">
-              {postsFetchError}
-            </p>
-          )}
-          {supabasePostsWarning && (
-            <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-amber-400/90 mb-4 leading-relaxed">
-              Database list error: {supabasePostsWarning} — optional MDX files (if any) still show from the manifest.
-            </p>
-          )}
-          {loadingPosts ? (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">Loading...</p>
-          ) : posts.length === 0 ? (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">
-              No posts found. Run <code className="text-white/45">supabase/schema_seed.sql</code> in Supabase, then
-              publish from New post — or add optional .mdx files under src/content/blog.
-            </p>
-          ) : (
-            <div className="space-y-0">
-              {posts.map((post) => (
-                <div
-                  key={post.id}
-                  className="flex items-start justify-between gap-4 py-5 border-b border-white/10"
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="inline-block font-brutal text-[8px] tracking-[0.2em] uppercase text-white/40 border border-white/15 rounded-sm px-2 py-0.5">
-                        {post.source === "mdx" ? "MDX file" : "Database"}
-                      </span>
-                    </div>
-                    <p className="font-brutal text-sm text-white truncate">{post.title}</p>
-                    <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/30 mt-1">
-                      {post.slug} · {post.date}
+        <div className="mt-8 hidden flex-col gap-2 border-t border-white/[0.08] pt-8 lg:flex">
+          <Link
+            href="/blog"
+            className={`${btnGhost} justify-start border-white/[0.1] bg-transparent text-sm`}
+          >
+            <ExternalLink className="h-4 w-4" aria-hidden />
+            View blog
+          </Link>
+          <button
+            type="button"
+            onClick={signOut}
+            className={`${btnGhost} justify-start border-white/[0.1] bg-transparent text-sm hover:border-red-400/40 hover:text-red-200`}
+          >
+            <LogOut className="h-4 w-4" aria-hidden />
+            Sign out
+          </button>
+        </div>
+
+        <div className="mt-6 flex gap-2 lg:hidden">
+          <Link href="/blog" className={`${btnGhost} flex-1 text-sm`}>
+            Blog
+          </Link>
+          <button type="button" onClick={signOut} className={`${btnGhost} flex-1 text-sm`}>
+            Out
+          </button>
+        </div>
+      </aside>
+
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-12">
+        <div className="mx-auto max-w-3xl lg:max-w-4xl">
+          {tab === "new" && (
+            <div className={`${card} p-6 sm:p-8 lg:p-10`}>
+              <header className="mb-8 border-b border-white/[0.08] pb-6">
+                <h2 className={`${t.title} text-xl sm:text-2xl`}>{editingSlug ? "Edit post" : "New post"}</h2>
+                <p className={`${t.meta} mt-2 max-w-xl`}>
+                  {editingSlug
+                    ? "Changes go live after save. The post date on the blog index updates to today."
+                    : "Publish markdown to your blog. Slug is generated from the title until you edit it."}
+                </p>
+              </header>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {editingSlug && (
+                  <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-amber-400/30 bg-amber-950/25 px-4 py-4 sm:px-5">
+                    <p className={`${t.body} text-white`}>
+                      Editing <span className="font-semibold">{editingSlug}</span>
+                    </p>
+                    <button type="button" onClick={cancelEditDraft} className={btnGhost}>
+                      Cancel edit
+                    </button>
+                  </div>
+                )}
+
+                {postStatus === "success" && successLinkSlug && (
+                  <div className="rounded-xl border border-emerald-400/35 bg-emerald-950/30 px-4 py-4 sm:px-5">
+                    <p className={`${t.body} text-white`}>
+                      {lastSaveWasEdit ? "Saved." : "Published."}{" "}
+                      <Link href={`/blog/${successLinkSlug}`} className="font-semibold underline underline-offset-4">
+                        View post
+                      </Link>
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      target="_blank"
-                      className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/30 hover:text-white transition-colors"
-                    >
-                      View
-                    </Link>
-                    {post.source === "supabase" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => loadPostForEdit(post.slug)}
-                          className="font-brutal text-[9px] tracking-[0.2em] uppercase text-zinc-200 hover:text-white transition-colors inline-flex items-center gap-1.5 rounded border border-white/25 bg-white/[0.06] px-2.5 py-1.5 hover:border-white/40"
-                          title="Edit in admin"
-                        >
-                          <Pencil className="h-3 w-3" />
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deletePost(post)}
-                          className="rounded border border-white/15 bg-transparent p-1.5 text-zinc-400 hover:border-red-400/40 hover:text-red-400 transition-colors"
-                          title="Delete post from database"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </>
-                    ) : (
-                      <span
-                        className="font-brutal text-[8px] tracking-[0.15em] uppercase text-white/15 max-w-[7rem] text-right leading-tight"
-                        title="File-only post: delete the .mdx under src/content/blog to remove it"
-                      >
-                        File-backed
-                      </span>
-                    )}
+                )}
+                {postStatus === "error" && (
+                  <div className="rounded-xl border border-red-500/40 bg-red-950/35 px-4 py-4">
+                    <p className={`${t.body} text-red-100`}>{postError}</p>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {hiddenDupCount > 0 && (
-            <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/25 mt-8 leading-relaxed">
-              {hiddenDupCount} slug(s) have both an MDX file and a database row — the live site uses the{" "}
-              <span className="text-white/55">database</span> copy. Keep them in sync (edit in admin or re-run{" "}
-              <code className="text-white/45">pnpm seed:posts</code> after changing the file), or remove one source.
-            </p>
-          )}
-          <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/20 mt-8 leading-relaxed">
-            Posts are stored in Supabase (New post). Optional .mdx files in src/content/blog merge into the admin
-            list after <code className="text-white/45">pnpm prebuild</code>.
-          </p>
-        </div>
-      )}
+                )}
 
-      {/* ── Tab: Comments ── */}
-      {tab === "comments" && (
-        <div>
-          {loadingComments ? (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">Loading...</p>
-          ) : comments.length === 0 ? (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">No comments yet.</p>
-          ) : (
-            <div className="space-y-0">
-              {comments.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-start justify-between gap-4 py-5 border-b border-white/10"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-3 mb-1">
-                      <span className="font-brutal text-xs text-white">{c.name || FALLBACK_DISPLAY_NAME}</span>
-                      <span className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/25">
-                        {c.post_slug} · {new Date(c.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="font-sans text-sm text-white/50 leading-relaxed line-clamp-2">{c.body}</p>
+                <Field label="Title *">
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    className={inputClass}
+                    placeholder="Post title"
+                  />
+                </Field>
+                <Field label="Slug">
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    readOnly={!!editingSlug}
+                    className={`${inputClass} ${editingSlug ? "cursor-not-allowed border-white/[0.08] bg-zinc-900/80" : ""}`}
+                    placeholder="url-friendly-slug"
+                  />
+                </Field>
+                <Field label="Excerpt">
+                  <textarea
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                    rows={3}
+                    className={`${inputClass} min-h-[88px] resize-y py-3`}
+                    placeholder="Short description for the blog index"
+                  />
+                </Field>
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                  <Field label="Tags (comma-separated)">
+                    <input
+                      type="text"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      className={inputClass}
+                      placeholder="design, engineering"
+                    />
+                  </Field>
+                  <Field label="Read time">
+                    <input
+                      type="text"
+                      value={readTime}
+                      onChange={(e) => setReadTime(e.target.value)}
+                      className={inputClass}
+                      placeholder="5 min read"
+                    />
+                  </Field>
+                  <Field label={editingSlug ? "Date (updated on save)" : "Date"}>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      disabled={!!editingSlug}
+                      className={`${inputClass} ${editingSlug ? "cursor-not-allowed border-white/[0.08] bg-zinc-900/90" : ""}`}
+                    />
+                  </Field>
+                </div>
+
+                <div className="rounded-xl border border-white/[0.1] bg-black/30 p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className={`${t.label}`}>Images</span>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={handleBlogImageChange}
+                    />
+                    <button
+                      type="button"
+                      disabled={imageUploadState === "uploading"}
+                      onClick={() => imageInputRef.current?.click()}
+                      className={`${btnGhost} disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-zinc-800`}
+                    >
+                      <ImagePlus className="h-4 w-4" aria-hidden />
+                      {imageUploadState === "uploading" ? "Uploading…" : "Upload & insert"}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => deleteComment(c.id)}
-                    className="text-white/20 hover:text-red-400 transition-colors shrink-0 mt-1"
-                    title="Delete comment"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
+                  <p className={`${t.meta} mt-3`}>
+                    Inserts markdown at the cursor. Bucket: <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-xs text-white">blog-images</code>
+                  </p>
+                  {imageUploadState === "error" && imageUploadError && (
+                    <p className="mt-3 text-sm text-red-200">{imageUploadError}</p>
+                  )}
+                </div>
+
+                <Field label="Content (markdown) *">
+                  <textarea
+                    ref={contentRef}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    required
+                    rows={22}
+                    className={`${inputClass} min-h-[320px] resize-y font-mono text-[13px] leading-relaxed sm:text-sm`}
+                    placeholder="Write your post…"
+                  />
+                </Field>
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button type="submit" disabled={postStatus === "saving"} className={btnPrimary}>
+                    {postStatus === "saving"
+                      ? editingSlug
+                        ? "Saving…"
+                        : "Publishing…"
+                      : editingSlug
+                        ? "Save changes"
+                        : "Publish"}
                   </button>
                 </div>
-              ))}
+              </form>
+            </div>
+          )}
+
+          {tab === "posts" && (
+            <div className={`${card} p-6 sm:p-8 lg:p-10`}>
+              <header className="mb-8 border-b border-white/[0.08] pb-6">
+                <h2 className={`${t.title} text-xl sm:text-2xl`}>Posts</h2>
+                <p className={`${t.meta} mt-2`}>Every entry on your blog. Database posts can be edited or removed here.</p>
+              </header>
+
+              {postsActionError && (
+                <p className="mb-4 rounded-xl border border-red-500/40 bg-red-950/35 px-4 py-3 text-sm text-red-100">
+                  {postsActionError}
+                </p>
+              )}
+              {postsFetchError && (
+                <p className="mb-4 rounded-xl border border-red-500/40 bg-red-950/35 px-4 py-3 text-sm text-red-100">
+                  {postsFetchError}
+                </p>
+              )}
+              {supabasePostsWarning && (
+                <p className="mb-4 rounded-xl border border-amber-400/35 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
+                  Database list error: {supabasePostsWarning} — optional MDX manifest entries may still show.
+                </p>
+              )}
+
+              {loadingPosts ? (
+                <p className={`${t.body} py-12 text-center`}>Loading posts…</p>
+              ) : posts.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/[0.2] bg-black/25 px-6 py-12 text-center">
+                  <p className={`${t.body}`}>
+                    No posts yet. Run <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">supabase/schema_seed.sql</code> in Supabase, then publish from Write — or add optional <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">.mdx</code> files under{" "}
+                    <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">src/content/blog</code>.
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {posts.map((post) => (
+                    <li
+                      key={post.id}
+                      className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="inline-flex rounded-lg border border-white/[0.15] bg-white/[0.06] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                          {post.source === "mdx" ? "MDX file" : "Database"}
+                        </span>
+                        <p className={`${t.title} mt-3 line-clamp-2`}>{post.title}</p>
+                        <p className={`${t.meta} mt-2 font-mono text-xs sm:text-sm`}>
+                          {post.slug} · {post.date}
+                        </p>
+                        {post.excerpt ? (
+                          <p className={`${t.body} mt-2 line-clamp-2 text-sm`}>{post.excerpt}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-stretch lg:flex-row lg:items-center">
+                        <Link
+                          href={`/blog/${post.slug}`}
+                          target="_blank"
+                          className={`${btnGhost} justify-center text-sm`}
+                        >
+                          <ExternalLink className="h-4 w-4" aria-hidden />
+                          View
+                        </Link>
+                        {post.source === "supabase" ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => loadPostForEdit(post.slug)}
+                              className={`${btnGhost} justify-center border-white/[0.2] bg-white/[0.08] text-sm`}
+                            >
+                              <Pencil className="h-4 w-4" aria-hidden />
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deletePost(post)}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
+                              title="Delete from database"
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden />
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <span className={`${t.meta} rounded-lg border border-white/[0.08] px-3 py-2 text-center text-xs`}>
+                            File-backed — remove the <code className="text-white">.mdx</code> in the repo to drop it.
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {hiddenDupCount > 0 && (
+                <p className={`${t.meta} mt-8 rounded-xl border border-white/[0.1] bg-black/20 p-4`}>
+                  {hiddenDupCount} slug(s) have both an MDX file and a database row — the site uses the database copy.
+                  Re-run <code className="rounded bg-white/10 px-1 py-0.5 text-white">pnpm seed:posts</code> after file edits, or remove one source.
+                </p>
+              )}
+              <p className={`${t.meta} mt-6`}>
+                Supabase holds live posts. Optional <code className="rounded bg-white/10 px-1 py-0.5 text-white">.mdx</code> in{" "}
+                <code className="rounded bg-white/10 px-1 py-0.5 text-white">src/content/blog</code> appear here after{" "}
+                <code className="rounded bg-white/10 px-1 py-0.5 text-white">pnpm prebuild</code>.
+              </p>
+            </div>
+          )}
+
+          {tab === "comments" && (
+            <div className={`${card} p-6 sm:p-8 lg:p-10`}>
+              <header className="mb-8 border-b border-white/[0.08] pb-6">
+                <h2 className={`${t.title} text-xl sm:text-2xl`}>Comments</h2>
+                <p className={`${t.meta} mt-2`}>Moderate reader comments across all posts.</p>
+              </header>
+
+              {loadingComments ? (
+                <p className={`${t.body} py-12 text-center`}>Loading comments…</p>
+              ) : comments.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/[0.2] bg-black/25 px-6 py-12 text-center">
+                  <p className={`${t.body}`}>No comments yet.</p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {comments.map((c) => (
+                    <li
+                      key={c.id}
+                      className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-start sm:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className={`${t.title} text-base`}>{c.name || FALLBACK_DISPLAY_NAME}</p>
+                        <p className={`${t.meta} mt-1 font-mono text-xs sm:text-sm`}>
+                          {c.post_slug} · {new Date(c.created_at).toLocaleDateString()}
+                        </p>
+                        <p className={`${t.body} mt-3 line-clamp-4`}>{c.body}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteComment(c.id)}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
+                        title="Delete comment"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>
-      )}
+      </main>
     </div>
   );
 }
 
-const INPUT = "w-full bg-white/5 border border-white/15 px-4 py-3 font-brutal text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-white/40";
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <label className="font-brutal text-[9px] tracking-[0.25em] uppercase text-white/35">{label}</label>
+    <div className="space-y-2">
+      <label className="block text-xs font-semibold uppercase tracking-widest text-white sm:text-sm">{label}</label>
       {children}
     </div>
   );
