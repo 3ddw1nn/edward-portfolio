@@ -31,6 +31,36 @@ export const projects: AppProject[] = [
     category: "web",
   },
   {
+    id: 5,
+    title: "Content Farmer",
+    year: "2025-2026",
+    description:
+      "Creator-operations dashboard for multi-account YouTube management, performance visibility, and a roadmapped content pipeline.",
+    longDescription:
+      "Content Farmer is a full-stack monorepo (Next.js frontend, NestJS API) shaped like an internal ops product: Supabase-backed auth with email verification and password reset, a protected dashboard, workspaces and connected accounts, and sync for channel and video metadata (thumbnails, titles, stats). Revenue-oriented views (overview, by channel, by video) sit alongside drafts for in-progress work, audit logging for sensitive actions, and a “Create content” flow that moves toward research → script → generation → publish. YouTube ships first; the architecture is modular so more platforms and deeper AI-assisted workflows can land over time without rewriting the core.",
+    technologies: [
+      "TypeScript",
+      "Next.js",
+      "NestJS",
+      "PostgreSQL",
+      "Prisma",
+      "Supabase",
+      "TanStack Query",
+      "Tailwind CSS",
+      "Docker",
+    ],
+    features: [
+      "Multi-workspace dashboard with JWT-backed API access and encrypted OAuth token handling",
+      "Channel and video sync with browsable metadata and revenue-oriented reporting surfaces",
+      "Drafts, audit logs, and guardrails around high-impact actions",
+      "DTO-driven REST API with Nest modules built for additional providers later",
+      "Scaffolded “create content” pipeline (research → script → generation → publish) on a foundation of real auth, data model, and integrations",
+    ],
+    url: "https://github.com/3ddw1nn/content-farmer",
+    screenshotUrl: "/images/blog-background.jpg",
+    category: "web",
+  },
+  {
     id: 1,
     title: "Muffin App",
     year: "2025",

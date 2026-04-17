@@ -126,7 +126,10 @@ export default function ApplicationsPage() {
                       alt={project.title}
                       fill
                       className={`object-cover group-hover:scale-105 transition-transform duration-700 ${
-                        project.title === "Knoxlabs VR Partner Portal" ? "object-left-top" : "object-top"
+                        project.title === "Knoxlabs VR Partner Portal" ||
+                        project.title === "Content Farmer"
+                          ? "object-left-top"
+                          : "object-top"
                       }`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
