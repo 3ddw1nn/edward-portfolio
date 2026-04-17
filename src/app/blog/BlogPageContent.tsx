@@ -7,20 +7,19 @@ import type { PostMeta } from "@/lib/blog";
 import type { PostEngagement } from "@/lib/engagement";
 import { Heart, MessageCircle } from "lucide-react";
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+import { formatPostDate } from "@/lib/format-date";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function BlogPageContent({
   posts,
   engagement,
+  page,
+  pageCount,
 }: {
   posts: PostMeta[];
   engagement: Record<string, PostEngagement>;
+  page: number;
+  pageCount: number;
 }) {
   return (
     <div className="w-full min-h-screen bg-black text-white font-sans">
@@ -114,7 +113,7 @@ export function BlogPageContent({
 
               <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0 sm:pt-1">
                 <span className="font-brutal text-[10px] tracking-[0.15em] uppercase text-white/35">
-                  {formatDate(post.date)}
+                  {formatPostDate(post.date)}
                 </span>
                 <span className="font-brutal text-[10px] tracking-[0.15em] uppercase text-white/35">
                   {post.readTime}
@@ -143,6 +142,14 @@ export function BlogPageContent({
             </Link>
           </motion.div>
         ))}
+
+        <Pagination
+          mode="link"
+          page={page}
+          pageCount={pageCount}
+          buildHref={(p) => (p === 1 ? "/blog" : `/blog?page=${p}`)}
+          className="pb-16 pt-8"
+        />
       </div>
     </div>
   );

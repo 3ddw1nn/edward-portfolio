@@ -6,6 +6,7 @@ import { getOrCreateBlogVisitorId } from "@/lib/blogVisitor";
 import { combinedCommentText, isProfane, PROFANITY_COMMENT_WARNING } from "@/lib/profanity";
 import Image from "next/image";
 import { GifPicker } from "./GifPicker";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const STORAGE_KEY = "admin_pw";
 const FALLBACK_DISPLAY_NAME = "Mystery Goblin";
@@ -116,31 +117,83 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   const [replyTarget, setReplyTarget]     = useState<{ id: string; name: string; preview: string } | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
   const [pendingLikeId, setPendingLikeId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const textareaRef                       = useRef<HTMLTextAreaElement>(null);
   const gifBtnRef                         = useRef<HTMLButtonElement>(null);
+  const sentinelRef                       = useRef<HTMLDivElement>(null);
+  /** Tracks the cursor for the current in-flight request so we ignore stale responses. */
+  const loadRequestRef                    = useRef(0);
 
   useEffect(() => {
     setIsAdmin(!!localStorage.getItem(STORAGE_KEY));
   }, []);
 
-  const fetchComments = useCallback(async () => {
-    const visitorId = getOrCreateBlogVisitorId();
-    const params = new URLSearchParams({ slug: postSlug });
-    if (visitorId) params.set("visitor_id", visitorId);
-    const res = await fetch(`/api/comments?${params}`);
-    if (res.ok) {
+  const loadPage = useCallback(
+    async (nextCursor: string | null, replace: boolean) => {
+      const requestId = ++loadRequestRef.current;
+      const visitorId = getOrCreateBlogVisitorId();
+      const params = new URLSearchParams({ slug: postSlug, limit: "10" });
+      if (visitorId) params.set("visitor_id", visitorId);
+      if (nextCursor) params.set("cursor", nextCursor);
+
+      const res = await fetch(`/api/comments?${params}`);
+      if (requestId !== loadRequestRef.current) return; // stale — abandon
+      if (!res.ok) {
+        if (replace) setLoading(false);
+        setLoadingMore(false);
+        return;
+      }
       const json = await res.json();
-      const rows = json.comments ?? [];
-      setComments(
-        rows.map((c: Comment) => ({
-          ...c,
-          like_count: typeof c.like_count === "number" ? c.like_count : 0,
-          liked: !!c.liked,
-        }))
-      );
-    }
-    setLoading(false);
-  }, [postSlug]);
+      const rows: Comment[] = (json.comments ?? []).map((c: Comment) => ({
+        ...c,
+        like_count: typeof c.like_count === "number" ? c.like_count : 0,
+        liked: !!c.liked,
+      }));
+
+      setComments((prev) => {
+        if (replace) return rows;
+        // Dedupe by id — an optimistically-inserted new comment might be re-fetched.
+        const seen = new Set(prev.map((c) => c.id));
+        return [...prev, ...rows.filter((r) => !seen.has(r.id))];
+      });
+      setCursor(json.nextCursor ?? null);
+      setHasMore(!!json.hasMore);
+      if (replace) setLoading(false);
+      setLoadingMore(false);
+    },
+    [postSlug]
+  );
+
+  // Initial load + reset on slug change.
+  useEffect(() => {
+    setLoading(true);
+    setComments([]);
+    setCursor(null);
+    setHasMore(true);
+    void loadPage(null, true);
+  }, [loadPage]);
+
+  // Infinite scroll: observe a sentinel element below the list.
+  useEffect(() => {
+    if (loading || !hasMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && hasMore && !loadingMore) {
+          setLoadingMore(true);
+          void loadPage(cursor, false);
+        }
+      },
+      { rootMargin: "400px 0px" } // start fetching before the sentinel is visible
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loading, hasMore, loadingMore, cursor, loadPage]);
 
   async function toggleCommentLike(commentId: string) {
     const visitorId = getOrCreateBlogVisitorId();
@@ -160,13 +213,12 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
             : c
         )
       );
-    } else {
-      await fetchComments();
     }
+    // On failure: leave the optimistic state alone rather than re-fetching the
+    // whole list and resetting the infinite-scroll cursor. Next full load will
+    // self-heal anyway.
     setPendingLikeId(null);
   }
-
-  useEffect(() => { fetchComments(); }, [fetchComments]);
 
   async function handleDelete(id: string) {
     const pw = localStorage.getItem(STORAGE_KEY);
@@ -342,7 +394,7 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
           {hoveredId === comment.id && isAdmin && (
             <div className="absolute right-4 top-0 -translate-y-1/2 flex items-center gap-1 bg-[#2b2d31] border border-[#1e1f22] rounded-md shadow-xl px-1 py-1 z-10">
               <button
-                onClick={() => handleDelete(comment.id)}
+                onClick={() => setPendingDeleteId(comment.id)}
                 className="p-1.5 rounded text-[#949ba4] hover:text-red-400 hover:bg-red-400/10 transition-colors"
                 title="Delete"
               >
@@ -418,7 +470,21 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
             <p className="text-[#6d6f78] text-xs mt-1">Be the first to say something!</p>
           </div>
         ) : (
-          <div>{topLevelComments.map((comment) => renderComment(comment))}</div>
+          <>
+            <div>{topLevelComments.map((comment) => renderComment(comment))}</div>
+            {/* Sentinel — IntersectionObserver triggers the next page load here. */}
+            <div ref={sentinelRef} className="h-px" aria-hidden />
+            {loadingMore && (
+              <div className="px-4 py-6 text-center">
+                <p className="text-xs text-[#6d6f78]">Loading more…</p>
+              </div>
+            )}
+            {!hasMore && topLevelComments.length >= 10 && (
+              <div className="px-4 py-6 text-center">
+                <p className="text-[11px] uppercase tracking-wider text-[#6d6f78]">End of thread</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -538,6 +604,17 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
           Press <kbd className="font-mono">Enter</kbd> to send · <kbd className="font-mono">Shift+Enter</kbd> for new line
         </p>
       </div>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(v) => !v && setPendingDeleteId(null)}
+        title="Delete comment?"
+        description="The comment and its likes will be permanently removed. This cannot be undone."
+        confirmLabel="Delete comment"
+        onConfirm={async () => {
+          if (pendingDeleteId) await handleDelete(pendingDeleteId);
+        }}
+      />
     </section>
   );
 }

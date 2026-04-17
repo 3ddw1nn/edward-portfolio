@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { BlogPostAdminToolbar } from "@/components/blog/BlogPostAdminToolbar";
 import { PostLikeButton } from "@/components/blog/PostLikeButton";
+import { formatPostDate } from "@/lib/format-date";
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -25,14 +26,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   } catch {
     return { title: "Post not found" };
   }
-}
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -96,7 +89,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-6 border-t border-white/10">
             <div className="flex items-center gap-1.5 text-xs text-white/50">
               <Calendar className="h-3.5 w-3.5" />
-              {formatDate(post.date)}
+              {formatPostDate(post.date)}
             </div>
             <div className="w-px h-3 bg-white/15 hidden sm:block" />
             <div className="flex items-center gap-1.5 text-xs text-white/50">

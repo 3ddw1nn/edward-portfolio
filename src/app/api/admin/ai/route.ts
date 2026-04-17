@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveOpenAiChatModel } from "@/lib/openai-chat-models";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 type Action = "autofillEmpty" | "improveContent" | "fromPrompt";
 
@@ -21,6 +21,12 @@ function parseJsonFromAssistant(content: string): Record<string, unknown> {
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
+/** OpenAI's reasoning models (o1 / o3 / o4 families) reject `temperature`
+ * and a few other legacy sampling params. Detect by id prefix. */
+function isReasoningModel(model: string): boolean {
+  return /^o[134](?:-|$)/i.test(model);
+}
+
 async function openaiChatJson(
   system: string,
   user: string,
@@ -31,21 +37,25 @@ async function openaiChatJson(
     throw new Error("OPENAI_API_KEY is not set (add a real key in .env.local; see .env.example)");
   }
 
+  const payload: Record<string, unknown> = {
+    model,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+  };
+  if (!isReasoningModel(model)) {
+    payload.temperature = 0.5;
+  }
+
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model,
-      temperature: 0.5,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
+    body: JSON.stringify(payload),
   });
 
   const json = (await res.json().catch(() => ({}))) as {
@@ -120,17 +130,25 @@ Rules: keep headings and structure sensible; fix clarity and flow; do NOT add im
         return NextResponse.json({ error: "fillKeys must list empty fields to fill" }, { status: 400 });
       }
 
+      // The model can't know "today", so we never ask it for the date.
+      const aiFillKeys = fillKeys.filter((k) => k !== "date");
+
       const system = `You help fill metadata for a technical blog post. Never include image markdown or URLs.
-Return a single JSON object with ONLY these keys (omit keys you cannot infer): ${fillKeys.join(", ")}.
-Use types: title string, slug string (lowercase kebab-case), excerpt string (1-2 sentences), tags string[] (2-6 short tags), read_time string like "6 min read", date string YYYY-MM-DD.
-Do NOT return a "content" key.`;
+Return a single JSON object with ONLY these keys (omit keys you cannot infer): ${aiFillKeys.join(", ")}.
+Use types: title string, slug string (lowercase kebab-case), excerpt string (1-2 sentences), tags string[] (2-6 short tags), read_time string like "6 min read".
+Do NOT return a "content" or "date" key.`;
 
       const user = `Fill only the listed empty fields. Context (may include partial content for tone — do not echo it back):\n${JSON.stringify(ctx, null, 2)}`;
 
-      const out = await openaiChatJson(system, user, model);
       const cleaned: Record<string, unknown> = {};
-      for (const k of fillKeys) {
-        if (k in out && k !== "content") cleaned[k] = out[k];
+      if (aiFillKeys.length > 0) {
+        const out = await openaiChatJson(system, user, model);
+        for (const k of aiFillKeys) {
+          if (k in out && k !== "content" && k !== "date") cleaned[k] = out[k];
+        }
+      }
+      if (fillKeys.includes("date")) {
+        cleaned.date = new Date().toISOString().slice(0, 10);
       }
       return NextResponse.json({ fields: cleaned });
     }
@@ -141,9 +159,11 @@ Do NOT return a "content" key.`;
         return NextResponse.json({ error: "prompt is required" }, { status: 400 });
       }
 
+      // We never let the model pick the date — its training cutoff means it
+      // will cheerfully hallucinate 2023-ish dates. Server stamps today.
       const system = `You draft a full blog post from the user's idea. Output JSON with keys:
-title, slug (kebab-case), excerpt (1-2 sentences), tags (array of 2-6 strings), read_time (e.g. "7 min read"), date (YYYY-MM-DD), content (markdown body).
-Rules: content must be substantive markdown with headings where helpful; NEVER include images, ![alt](url), or bare image URLs — the author uploads images separately.`;
+title, slug (kebab-case), excerpt (1-2 sentences), tags (array of 2-6 strings), read_time (e.g. "7 min read"), content (markdown body).
+Rules: content must be substantive markdown with headings where helpful; NEVER include images, ![alt](url), or bare image URLs — the author uploads images separately. Do NOT return a "date" field.`;
 
       const out = await openaiChatJson(system, `Idea / instructions:\n${prompt.slice(0, 20_000)}`, model);
 
@@ -157,7 +177,7 @@ Rules: content must be substantive markdown with headings where helpful; NEVER i
         excerpt: typeof out.excerpt === "string" ? out.excerpt : "",
         tags,
         read_time: typeof out.read_time === "string" ? out.read_time : "5 min read",
-        date: typeof out.date === "string" ? out.date : new Date().toISOString().slice(0, 10),
+        date: new Date().toISOString().slice(0, 10),
         content,
       });
     }

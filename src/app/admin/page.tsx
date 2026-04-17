@@ -4,10 +4,16 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminEditFromUrl } from "./AdminEditFromUrl";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Pagination } from "@/components/ui/Pagination";
+
+const POSTS_PAGE_SIZE = 10;
+const COMMENTS_PAGE_SIZE = 10;
 import {
   ExternalLink,
   FilePenLine,
   ImagePlus,
+  Info,
   LogOut,
   MessageSquareText,
   Newspaper,
@@ -20,6 +26,9 @@ import {
   DEFAULT_OPENAI_CHAT_MODEL,
   OPENAI_CHAT_MODEL_IDS,
   OPENAI_CHAT_MODELS,
+  estimatePostCostUsd,
+  formatTier,
+  formatUsd,
 } from "@/lib/openai-chat-models";
 
 const STORAGE_KEY = "admin_pw";
@@ -47,6 +56,65 @@ const btnPrimary =
 const btnNav = (active: boolean) =>
   `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition ${active ? "bg-white text-black shadow-lg shadow-black/30" : "text-white hover:bg-white/[0.06]"}`;
 
+/** Hover/focus legend showing per‑model OpenAI pricing + rough per‑post cost.
+ * Pure CSS (group-hover / focus-within) so it works on keyboard and touch. */
+function ModelPricingLegend({ selectedId }: { selectedId: string }) {
+  return (
+    <span className="relative inline-flex group">
+      <button
+        type="button"
+        aria-label="Show model pricing"
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-white/80 transition hover:text-white hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/25 focus-visible:text-white"
+      >
+        <Info className="h-3.5 w-3.5" aria-hidden />
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute right-0 top-full z-30 mt-2 w-[min(22rem,90vw)] origin-top-right scale-95 rounded-xl border border-white/15 bg-zinc-950/95 p-3 text-left opacity-0 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.9)] backdrop-blur-md transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:scale-100 group-focus-within:opacity-100"
+      >
+        <p className="text-xs font-semibold text-white">OpenAI pricing (approx.)</p>
+        <p className="mt-0.5 text-[11px] text-zinc-400">
+          Per 1M tokens · ~$/post is a rough 1k‑in + 4k‑out draft.
+        </p>
+        <table className="mt-2 w-full text-left text-[11px] sm:text-xs">
+          <thead>
+            <tr className="text-zinc-400">
+              <th className="py-1 font-medium">Model</th>
+              <th className="py-1 text-right font-medium">Input</th>
+              <th className="py-1 text-right font-medium">Output</th>
+              <th className="py-1 text-right font-medium">~$/post</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {OPENAI_CHAT_MODELS.map((m) => {
+              const active = m.id === selectedId;
+              return (
+                <tr
+                  key={m.id}
+                  className={active ? "text-white" : "text-zinc-300"}
+                >
+                  <td className="py-1.5 pr-2">
+                    <span className="mr-1.5 font-mono text-zinc-400">{formatTier(m.tier)}</span>
+                    {m.label}
+                    {active ? <span className="ml-1 text-[10px] text-emerald-400">●</span> : null}
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">${m.inputPerM.toFixed(2)}</td>
+                  <td className="py-1.5 text-right tabular-nums">${m.outputPerM.toFixed(2)}</td>
+                  <td className="py-1.5 text-right tabular-nums">{formatUsd(estimatePostCostUsd(m))}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        <p className="mt-2 text-[11px] text-zinc-500">
+          Rates change — verify at{" "}
+          <span className="text-zinc-300">platform.openai.com/pricing</span>.
+        </p>
+      </span>
+    </span>
+  );
+}
+
 function slugify(title: string) {
   return title
     .toLowerCase()
@@ -54,6 +122,33 @@ function slugify(title: string) {
     .replace(/[^\w\s-]/g, "")
     .replace(/[\s_-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+/** Capitalize the first letter of a tag, leave the rest untouched.
+ *  "brain rot" -> "Brain rot", "AI" -> "AI", "iOS" -> "IOs" would be wrong, so
+ *  we only uppercase char 0 when it's currently lowercase. */
+function capitalizeTag(raw: string): string {
+  const s = raw.trim();
+  if (!s) return s;
+  const first = s.charAt(0);
+  if (first === first.toUpperCase()) return s;
+  return first.toUpperCase() + s.slice(1);
+}
+
+/** Split a comma-separated tag string, trim, drop empties, capitalize, dedupe. */
+function normalizeTagList(input: string | string[]): string[] {
+  const parts = Array.isArray(input) ? input : input.split(",");
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of parts) {
+    const tag = capitalizeTag(String(raw));
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+  }
+  return out;
 }
 
 type Post = {
@@ -71,6 +166,9 @@ type Comment = {
   post_slug: string;
   name: string | null;
   body: string;
+  gif_url: string | null;
+  reply_to_id: string | null;
+  reply_to_name: string | null;
   created_at: string;
 };
 
@@ -94,6 +192,12 @@ export default function AdminPage() {
   /** When AI sets both title+slug, skip one slugify(title) pass so the model slug is kept */
   const skipSlugifyRef = useRef(false);
 
+  // Delete confirmation targets; null = no dialog open.
+  const [pendingDeletePost, setPendingDeletePost] = useState<Post | null>(null);
+  const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<string | null>(null);
+
+  const [postsPage, setPostsPage] = useState(1);
+
   const [showPromptGenerator, setShowPromptGenerator] = useState(false);
   const [generatorPrompt, setGeneratorPrompt] = useState("");
   const [aiBusy, setAiBusy] = useState<null | "autofill" | "prompt" | "polish">(null);
@@ -111,8 +215,11 @@ export default function AdminPage() {
   const [postsFetchError, setPostsFetchError] = useState("");
   const [postsActionError, setPostsActionError] = useState("");
   const [supabasePostsWarning, setSupabasePostsWarning] = useState<string | null>(null);
-  const [hiddenDupCount, setHiddenDupCount] = useState(0);
+  const [, setHiddenDupCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsPage, setCommentsPage] = useState(1);
+  const [commentsPageCount, setCommentsPageCount] = useState(1);
+  const [commentsTotal, setCommentsTotal] = useState(0);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
 
@@ -218,7 +325,9 @@ export default function AdminPage() {
         setExcerpt(fields.excerpt.trim());
       }
       if (fillKeys.includes("tags") && Array.isArray(fields.tags)) {
-        const arr = fields.tags.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
+        const arr = normalizeTagList(
+          fields.tags.filter((x): x is string => typeof x === "string")
+        );
         if (arr.length) setTags(arr.join(", "));
       }
       if (fillKeys.includes("read_time") && typeof fields.read_time === "string" && fields.read_time.trim()) {
@@ -267,7 +376,9 @@ export default function AdminPage() {
       }
       if (typeof data.excerpt === "string") setExcerpt(data.excerpt);
       if (Array.isArray(data.tags)) {
-        setTags(data.tags.filter((x) => typeof x === "string").map((x) => x.trim()).filter(Boolean).join(", "));
+        setTags(
+          normalizeTagList(data.tags.filter((x): x is string => typeof x === "string")).join(", ")
+        );
       }
       if (typeof data.read_time === "string") setReadTime(data.read_time);
       if (typeof data.content === "string") setContent(data.content);
@@ -337,19 +448,32 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authed || tab !== "comments") return;
+    let cancelled = false;
     setLoadingComments(true);
-    fetch("/api/admin/comments", {
+    const params = new URLSearchParams({
+      page: String(commentsPage),
+      limit: String(COMMENTS_PAGE_SIZE),
+    });
+    fetch(`/api/admin/comments?${params}`, {
       headers: { "x-admin-password": storedPw() },
     })
       .then((r) => r.json())
-      .then((j) => setComments(j.comments ?? []))
-      .finally(() => setLoadingComments(false));
+      .then((j) => {
+        if (cancelled) return;
+        setComments(j.comments ?? []);
+        setCommentsTotal(typeof j.total === "number" ? j.total : 0);
+        setCommentsPageCount(typeof j.pageCount === "number" ? j.pageCount : 1);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingComments(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authed, tab]);
+  }, [authed, tab, commentsPage]);
 
   async function deletePost(post: Post) {
-    if (post.source === "mdx") return;
-    if (!confirm(`Delete "${post.slug}" from the database? This cannot be undone.`)) return;
     const res = await fetch(`/api/blog?slug=${encodeURIComponent(post.slug)}`, {
       method: "DELETE",
       headers: { "x-admin-password": storedPw() },
@@ -412,9 +536,11 @@ export default function AdminPage() {
     setTitle(p.title);
     setSlug(p.slug);
     setExcerpt(p.excerpt ?? "");
-    setTags(Array.isArray(p.tags) ? p.tags.join(", ") : "");
+    setTags(Array.isArray(p.tags) ? normalizeTagList(p.tags).join(", ") : "");
     setReadTime(p.read_time ?? "5 min read");
-    setDate(p.date);
+    // Default the Date field to today on edit (still user-editable). The
+    // original publish date can always be restored by typing it back in.
+    setDate(new Date().toISOString().slice(0, 10));
     setContent(p.content ?? "");
     setTab("new");
     return true;
@@ -477,8 +603,31 @@ export default function AdminPage() {
       method: "DELETE",
       headers: { "x-admin-password": storedPw() },
     });
-    if (res.ok) {
-      setComments((prev) => prev.filter((c) => c.id !== id));
+    if (!res.ok) return;
+
+    // Re-fetch the current page so counts, pagination, and threaded-reply
+    // cascades (the server deletes descendants too) stay in sync.
+    const nextTotal = Math.max(0, commentsTotal - 1);
+    const nextPageCount = Math.max(1, Math.ceil(nextTotal / COMMENTS_PAGE_SIZE));
+    if (commentsPage > nextPageCount) {
+      setCommentsPage(nextPageCount);
+    } else {
+      // Bumping state is fine; the effect re-runs on commentsPage change only,
+      // so trigger a manual refetch by toggling the page through itself.
+      setCommentsPage((p) => p);
+      const params = new URLSearchParams({
+        page: String(commentsPage),
+        limit: String(COMMENTS_PAGE_SIZE),
+      });
+      const refresh = await fetch(`/api/admin/comments?${params}`, {
+        headers: { "x-admin-password": storedPw() },
+      });
+      if (refresh.ok) {
+        const j = await refresh.json();
+        setComments(j.comments ?? []);
+        setCommentsTotal(typeof j.total === "number" ? j.total : 0);
+        setCommentsPageCount(typeof j.pageCount === "number" ? j.pageCount : 1);
+      }
     }
   }
 
@@ -490,7 +639,10 @@ export default function AdminPage() {
     setPostError("");
     setSuccessLinkSlug(null);
 
-    const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const tagList = normalizeTagList(tags);
+    // Reflect the normalized tags in the input so the user sees what will be saved.
+    const normalizedTagsInput = tagList.join(", ");
+    if (normalizedTagsInput !== tags) setTags(normalizedTagsInput);
     const viewSlug = editingSlug ?? slug;
 
     const res = editingSlug
@@ -617,6 +769,33 @@ export default function AdminPage() {
         <AdminEditFromUrl authed={authed} loadPostForEdit={loadPostForEdit} />
       </Suspense>
 
+      <ConfirmDialog
+        open={pendingDeletePost !== null}
+        onOpenChange={(v) => !v && setPendingDeletePost(null)}
+        title="Delete post?"
+        description={
+          <>
+            This will permanently remove{" "}
+            <span className="font-mono text-white">{pendingDeletePost?.slug}</span>{" "}
+            from the database along with its comments and likes. This cannot be undone.
+          </>
+        }
+        confirmLabel="Delete post"
+        onConfirm={async () => {
+          if (pendingDeletePost) await deletePost(pendingDeletePost);
+        }}
+      />
+      <ConfirmDialog
+        open={pendingDeleteCommentId !== null}
+        onOpenChange={(v) => !v && setPendingDeleteCommentId(null)}
+        title="Delete comment?"
+        description="The comment and its likes will be permanently removed. This cannot be undone."
+        confirmLabel="Delete comment"
+        onConfirm={async () => {
+          if (pendingDeleteCommentId) await deleteComment(pendingDeleteCommentId);
+        }}
+      />
+
       <aside className="shrink-0 border-b border-white/[0.1] bg-zinc-950/80 px-4 py-5 lg:w-56 lg:border-b-0 lg:border-r lg:px-4 lg:py-8">
         <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
           <button type="button" onClick={() => setTab("new")} className={btnNav(tab === "new")}>
@@ -667,9 +846,15 @@ export default function AdminPage() {
                 </div>
                 <div className="flex w-full min-w-0 flex-col gap-3 sm:ml-auto sm:w-full sm:max-w-md">
                   <div>
-                    <label htmlFor="admin-openai-model" className={`mb-1.5 block ${t.label}`}>
-                      Model
-                    </label>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <label htmlFor="admin-openai-model" className={t.label}>
+                        Model
+                      </label>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-zinc-400">
+                        Pricing
+                        <ModelPricingLegend selectedId={openAiModel} />
+                      </span>
+                    </div>
                     <select
                       id="admin-openai-model"
                       value={openAiModel}
@@ -678,7 +863,8 @@ export default function AdminPage() {
                     >
                       {OPENAI_CHAT_MODELS.map((m) => (
                         <option key={m.id} value={m.id} className="bg-zinc-900 text-white">
-                          {m.label}
+                          {formatTier(m.tier)} · {m.label}
+                          {m.note ? ` — ${m.note}` : ""}
                         </option>
                       ))}
                     </select>
@@ -828,13 +1014,19 @@ export default function AdminPage() {
                       placeholder="5 min read"
                     />
                   </Field>
-                  <Field label={editingSlug ? "Date (updated on save)" : "Date"}>
+                  <Field label="Date">
                     <input
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
-                      disabled={!!editingSlug}
-                      className={`${inputClass} ${editingSlug ? "cursor-not-allowed border-white/[0.08] bg-zinc-900/90" : ""}`}
+                      onClick={(e) => {
+                        const el = e.currentTarget as HTMLInputElement & {
+                          showPicker?: () => void;
+                        };
+                        el.showPicker?.();
+                      }}
+                      style={{ colorScheme: "dark" }}
+                      className={`${inputClass} cursor-pointer`}
                     />
                   </Field>
                 </div>
@@ -932,7 +1124,7 @@ export default function AdminPage() {
               )}
               {supabasePostsWarning && (
                 <p className="mb-4 rounded-xl border border-amber-400/35 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
-                  Database list error: {supabasePostsWarning} — optional MDX manifest entries may still show.
+                  Database list error: {supabasePostsWarning}
                 </p>
               )}
 
@@ -941,13 +1133,18 @@ export default function AdminPage() {
               ) : posts.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/[0.2] bg-black/25 px-6 py-12 text-center">
                   <p className={`${t.body}`}>
-                    No posts yet. Run <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">supabase/schema_seed.sql</code> in Supabase, then publish from Create Post — or add optional <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">.mdx</code> files under{" "}
-                    <code className="rounded-md bg-white/10 px-1.5 py-0.5 text-sm text-white">src/content/blog</code>.
+                    No posts yet. Publish one from <span className="font-medium text-white">Create Post</span>.
                   </p>
                 </div>
-              ) : (
+              ) : (() => {
+                const pageCount = Math.max(1, Math.ceil(posts.length / POSTS_PAGE_SIZE));
+                const safePage = Math.min(Math.max(1, postsPage), pageCount);
+                const start = (safePage - 1) * POSTS_PAGE_SIZE;
+                const pageSlice = posts.slice(start, start + POSTS_PAGE_SIZE);
+                return (
+                <>
                 <ul className="space-y-4">
-                  {posts.map((post) => (
+                  {pageSlice.map((post) => (
                     <li
                       key={post.id}
                       className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-center sm:justify-between"
@@ -958,7 +1155,7 @@ export default function AdminPage() {
                             {post.tags.map((tag) => (
                               <span
                                 key={tag}
-                                className="inline-flex rounded-full border border-white/[0.18] bg-white/[0.06] px-3 py-1 text-xs font-medium text-white"
+                                className="inline-flex rounded-md border border-white/[0.18] bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-white"
                               >
                                 {tag}
                               </span>
@@ -996,7 +1193,7 @@ export default function AdminPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => deletePost(post)}
+                              onClick={() => setPendingDeletePost(post)}
                               className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
                               title="Delete from database"
                             >
@@ -1013,27 +1210,39 @@ export default function AdminPage() {
                     </li>
                   ))}
                 </ul>
-              )}
-
-              {hiddenDupCount > 0 && (
-                <p className={`${t.meta} mt-8 rounded-xl border border-white/[0.1] bg-black/20 p-4`}>
-                  {hiddenDupCount} slug(s) have both an MDX file and a database row — the site uses the database copy.
-                  Re-run <code className="rounded bg-white/10 px-1 py-0.5 text-white">pnpm seed:posts</code> after file edits, or remove one source.
+                <Pagination
+                  mode="button"
+                  page={safePage}
+                  pageCount={pageCount}
+                  onPageChange={(p) => {
+                    setPostsPage(p);
+                    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
+                <p className={`${t.meta} mt-3 text-center`}>
+                  Showing {start + 1}–{Math.min(start + POSTS_PAGE_SIZE, posts.length)} of {posts.length} posts
                 </p>
-              )}
-              <p className={`${t.meta} mt-6`}>
-                Supabase holds live posts. Optional <code className="rounded bg-white/10 px-1 py-0.5 text-white">.mdx</code> in{" "}
-                <code className="rounded bg-white/10 px-1 py-0.5 text-white">src/content/blog</code> appear here after{" "}
-                <code className="rounded bg-white/10 px-1 py-0.5 text-white">pnpm prebuild</code>.
-              </p>
+                </>
+                );
+              })()}
+
             </div>
           )}
 
           {tab === "comments" && (
             <div className={`${card} p-6 sm:p-8 lg:p-10`}>
               <header className="mb-8 border-b border-white/[0.08] pb-6">
-                <h2 className={`${t.title} text-xl sm:text-2xl`}>Comments</h2>
-                <p className={`${t.meta} mt-2`}>Moderate reader comments across all posts.</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className={`${t.title} text-xl sm:text-2xl`}>Comments</h2>
+                    <p className={`${t.meta} mt-2`}>Moderate reader comments across all posts.</p>
+                  </div>
+                  {!loadingComments && commentsTotal > 0 ? (
+                    <span className="inline-flex items-center rounded-md border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white">
+                      {commentsTotal} total
+                    </span>
+                  ) : null}
+                </div>
               </header>
 
               {loadingComments ? (
@@ -1043,31 +1252,120 @@ export default function AdminPage() {
                   <p className={`${t.body}`}>No comments yet.</p>
                 </div>
               ) : (
-                <ul className="space-y-4">
-                  {comments.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-start sm:justify-between"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className={`${t.title} text-base`}>{c.name || FALLBACK_DISPLAY_NAME}</p>
-                        <p className={`${t.meta} mt-1 font-mono text-xs sm:text-sm`}>
-                          {c.post_slug} · {new Date(c.created_at).toLocaleDateString()}
-                        </p>
-                        <p className={`${t.body} mt-3 line-clamp-4`}>{c.body}</p>
+                <>
+                  {/* Group the current page's comments by post so the source is obvious at a glance. */}
+                  {(() => {
+                    const groups = new Map<string, Comment[]>();
+                    for (const c of comments) {
+                      const key = c.post_slug ?? "(unknown)";
+                      const arr = groups.get(key) ?? [];
+                      arr.push(c);
+                      groups.set(key, arr);
+                    }
+                    return (
+                      <div className="space-y-6">
+                        {Array.from(groups.entries()).map(([slug, items]) => (
+                          <section
+                            key={slug}
+                            className="rounded-xl border border-white/[0.1] bg-black/25"
+                          >
+                            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] px-5 py-3">
+                              <div className="min-w-0">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                                  On post
+                                </p>
+                                <p className={`${t.title} truncate font-mono text-sm`}>{slug}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center rounded-md border border-white/[0.1] bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-white">
+                                  {items.length} on this page
+                                </span>
+                                <a
+                                  href={`/blog/${slug}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.15] bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white transition hover:border-white/30 hover:bg-white/[0.1]"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                                  View post
+                                </a>
+                              </div>
+                            </header>
+                            <ul className="divide-y divide-white/[0.06]">
+                              {items.map((c) => (
+                                <li
+                                  key={c.id}
+                                  className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className={`${t.title} text-base`}>
+                                        {c.name || FALLBACK_DISPLAY_NAME}
+                                      </p>
+                                      <span className={`${t.meta} text-xs`}>
+                                        {new Date(c.created_at).toLocaleString("en-US", {
+                                          dateStyle: "medium",
+                                          timeStyle: "short",
+                                        })}
+                                      </span>
+                                    </div>
+                                    {c.reply_to_name ? (
+                                      <p className={`${t.meta} mt-2 inline-flex items-center gap-1.5 rounded-md border border-white/[0.1] bg-white/[0.04] px-2 py-1 text-xs`}>
+                                        <MessageSquareText className="h-3 w-3 shrink-0 text-zinc-400" aria-hidden />
+                                        <span className="text-zinc-400">Reply to</span>
+                                        <span className="font-medium text-white">{c.reply_to_name}</span>
+                                      </p>
+                                    ) : null}
+                                    {c.body ? (
+                                      <p className={`${t.body} mt-3 whitespace-pre-wrap break-words`}>{c.body}</p>
+                                    ) : null}
+                                    {c.gif_url ? (
+                                      // Giphy is CDN-hosted; <img> avoids next/image remotePatterns config here.
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={c.gif_url}
+                                        alt="comment gif"
+                                        className="mt-3 max-h-64 w-auto rounded-xl border border-white/[0.1] bg-black/40"
+                                        loading="lazy"
+                                      />
+                                    ) : null}
+                                    {!c.body && !c.gif_url ? (
+                                      <p className={`${t.meta} mt-3 italic text-zinc-500`}>(empty comment)</p>
+                                    ) : null}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPendingDeleteCommentId(c.id)}
+                                    className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
+                                    title="Delete comment"
+                                  >
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                    Delete
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        ))}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => deleteComment(c.id)}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl border border-red-500/35 bg-red-950/30 px-4 py-2.5 text-sm font-medium text-red-100 transition hover:border-red-400/60 hover:bg-red-950/50"
-                        title="Delete comment"
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden />
-                        Delete
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                    );
+                  })()}
+
+                  <Pagination
+                    mode="button"
+                    page={commentsPage}
+                    pageCount={commentsPageCount}
+                    onPageChange={(p) => {
+                      setCommentsPage(p);
+                      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="pt-8"
+                  />
+                  <p className={`${t.meta} mt-3 text-center`}>
+                    Showing {(commentsPage - 1) * COMMENTS_PAGE_SIZE + 1}–
+                    {Math.min(commentsPage * COMMENTS_PAGE_SIZE, commentsTotal)} of {commentsTotal} comments
+                  </p>
+                </>
               )}
             </div>
           )}

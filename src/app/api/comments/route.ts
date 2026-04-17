@@ -49,7 +49,26 @@ function isMissingOptionalColumns(message?: string | null) {
   );
 }
 
-// GET /api/comments?slug=some-post&visitor_id=<uuid optional>
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 50;
+
+function coerceLimit(raw: string | null): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_PAGE_SIZE;
+  return Math.min(MAX_PAGE_SIZE, Math.max(1, Math.floor(n)));
+}
+
+/**
+ * GET /api/comments?slug=some-post[&visitor_id=<uuid>][&cursor=<ISO>][&limit=10]
+ *
+ * Paginated by *top-level* comments only. Each page returns up to `limit`
+ * top-level comments plus ALL of their descendant replies, so a reply is
+ * always returned with its parent — threads never break across pages.
+ *
+ * `cursor` is the `created_at` ISO string of the last top-level comment
+ * from the previous page (exclusive). Ordering is ascending (oldest first),
+ * matching the on-screen render order of a chat log.
+ */
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
   if (!slug) {
@@ -58,15 +77,27 @@ export async function GET(req: NextRequest) {
 
   const visitorRaw = req.nextUrl.searchParams.get("visitor_id");
   const visitorId = visitorRaw && UUID_RE.test(visitorRaw) ? visitorRaw : null;
+  const limit = coerceLimit(req.nextUrl.searchParams.get("limit"));
+  const cursor = req.nextUrl.searchParams.get("cursor");
 
   const admin = createAdminClient();
-  const { data, error } = await admin
+
+  // 1) Fetch the next page of top-level comments. Request +1 to detect `hasMore`.
+  let topQuery = admin
     .from("comments")
     .select("id, name, body, gif_url, reply_to_id, reply_to_name, created_at")
     .eq("post_slug", slug)
-    .order("created_at", { ascending: true });
+    .is("reply_to_id", null)
+    .order("created_at", { ascending: true })
+    .limit(limit + 1);
 
-  if (error && isMissingOptionalColumns(error.message)) {
+  if (cursor) topQuery = topQuery.gt("created_at", cursor);
+
+  const topRes = await topQuery;
+
+  // Older DBs without threaded-reply columns: fall back to flat + non-paginated,
+  // and include every comment once since there are no parents to anchor pages on.
+  if (topRes.error && isMissingOptionalColumns(topRes.error.message)) {
     const fallback = await admin
       .from("comments")
       .select("id, name, body, created_at")
@@ -84,15 +115,52 @@ export async function GET(req: NextRequest) {
       reply_to_name: null,
     }));
     const comments = await attachCommentLikes(admin, raw, visitorId);
-    return NextResponse.json({ comments });
+    return NextResponse.json({ comments, nextCursor: null, hasMore: false });
   }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (topRes.error) {
+    return NextResponse.json({ error: topRes.error.message }, { status: 500 });
   }
 
-  const comments = await attachCommentLikes(admin, data ?? [], visitorId);
-  return NextResponse.json({ comments });
+  const topRows = topRes.data ?? [];
+  const hasMore = topRows.length > limit;
+  const topPage = hasMore ? topRows.slice(0, limit) : topRows;
+
+  // 2) Pull every descendant reply for the top-level comments on this page.
+  //    Uses iterative BFS so nested reply chains all come along for the ride.
+  let descendants: (typeof topPage)[number][] = [];
+  let frontier = topPage.map((t) => t.id as string);
+  while (frontier.length > 0) {
+    const { data: children, error: childErr } = await admin
+      .from("comments")
+      .select("id, name, body, gif_url, reply_to_id, reply_to_name, created_at")
+      .eq("post_slug", slug)
+      .in("reply_to_id", frontier)
+      .order("created_at", { ascending: true });
+
+    if (childErr) {
+      // Can't fetch replies — return just top-level rather than 500-ing the page.
+      break;
+    }
+    const rows = children ?? [];
+    if (rows.length === 0) break;
+    descendants = descendants.concat(rows);
+    frontier = rows.map((r) => r.id as string);
+  }
+
+  const combined = [...topPage, ...descendants];
+  const comments = await attachCommentLikes(admin, combined, visitorId);
+  // Client sorts by created_at anyway, but return sorted for stable ordering.
+  comments.sort((a, b) => {
+    const ta = (a as Record<string, unknown>).created_at as string;
+    const tb = (b as Record<string, unknown>).created_at as string;
+    return ta < tb ? -1 : ta > tb ? 1 : 0;
+  });
+
+  const lastTop = topPage[topPage.length - 1];
+  const nextCursor = hasMore && lastTop ? (lastTop.created_at as string) : null;
+
+  return NextResponse.json({ comments, nextCursor, hasMore });
 }
 
 // POST /api/comments
