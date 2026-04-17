@@ -7,8 +7,6 @@ export const codeSkills: Skill[] = [
   { title: "React Native", src: "/Skills/code/ReactNativeIcon.png" },
   { title: "Node.js", src: "/Skills/code/NodeJSIcon.png" },
   { title: "NestJS", src: "/Skills/code/NestJSIcon.svg" },
-  { title: "HTML", src: "/Skills/code/HTMLIcon.svg" },
-  { title: "CSS", src: "/Skills/code/CSSIcon.svg" },
   { title: "Tailwind", src: "/Skills/code/TailwindIcon.svg" },
   { title: "Netlify", src: "/Skills/code/NetlifyIcon.svg" },
   { title: "Nx", src: "/Skills/code/NxIcon.svg" },
@@ -20,6 +18,16 @@ export const codeSkills: Skill[] = [
   { title: "Heroku", src: "/Skills/code/HerokuIcon.png" },
   { title: "Railway", src: "/Skills/code/RailwayIcon.svg" },
   { title: "CloudFlare", src: "/Skills/code/CloudFlareIcon.svg" },
+  { title: "Supabase", src: "/Skills/code/SupabaseIcon.svg" },
+  { title: "GCP", src: "/Skills/code/GCPIcon.svg" },
+  { title: "AWS", src: "/Skills/code/AWSIcon.svg" },
+  { title: "Shopify", src: "/Skills/code/ShopifyIcon.svg" },
+  { title: "Stripe", src: "/Skills/code/StripeIcon.svg" },
+  { title: "Vercel", src: "/Skills/code/VercelIcon.svg" },
+  { title: "Fly.io", src: "/Skills/code/FlyIcon.svg" },
+  { title: "Elasticsearch", src: "/Skills/code/ElasticSearchIcon.svg" },
+  { title: "DigitalOcean", src: "/Skills/code/DigitalOceanIcon.svg" },
+  { title: "Cloudinary", src: "/Skills/code/CloudinaryIcon.svg" },
 ];
 
 export const programSkills: Skill[] = [

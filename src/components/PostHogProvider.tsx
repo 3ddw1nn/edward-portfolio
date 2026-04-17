@@ -10,13 +10,14 @@ const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY?.trim() ?? ""
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!posthogKey) return
-    posthog.init(posthogKey, {
+    const initOpts = {
       api_host: "/ingest",
       ui_host: "https://us.posthog.com",
       capture_pageview: false,
       capture_pageleave: true,
       disable_toolbar: true,
-    })
+    }
+    posthog.init(posthogKey, initOpts as Parameters<typeof posthog.init>[1])
   }, [])
 
   if (!posthogKey) {

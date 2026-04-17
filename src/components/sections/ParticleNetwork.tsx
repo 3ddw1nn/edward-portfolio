@@ -6,8 +6,8 @@ import * as THREE from "three";
 
 const NODE_COUNT = 80;
 const CONNECTION_THRESHOLD = 2.2;
-const LIME = new THREE.Color("#d4f53c");
-const WHITE = new THREE.Color("#ffffff");
+const LIME = "#d4f53c";
+const WHITE = "#ffffff";
 
 function Nodes() {
   const meshRef = useRef<THREE.Points>(null);

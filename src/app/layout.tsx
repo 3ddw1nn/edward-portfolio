@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Newsreader, Oswald, Bebas_Neue } from "next/font/google";
+import { Inter, Oswald, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PostHogProvider } from "@/components/PostHogProvider";
 
-const newsreader = Newsreader({
+const inter = Inter({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const cormorant = Cormorant_Garamond({
+const interDisplay = Inter({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`scroll-smooth ${newsreader.variable} ${cormorant.variable} ${oswald.variable} ${bebasNeue.variable}`}
+      className={`scroll-smooth ${inter.variable} ${interDisplay.variable} ${oswald.variable} ${bebasNeue.variable}`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: `history.scrollRestoration = "manual"; window.scrollTo(0, 0);` }} />

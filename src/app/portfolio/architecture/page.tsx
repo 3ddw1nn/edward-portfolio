@@ -30,7 +30,7 @@ export default function ArchitecturePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <p className="font-display italic text-base md:text-lg text-white/55 tracking-wide">
+            <p className="font-sans text-base md:text-lg text-white/55 tracking-wide">
               Architecture
             </p>
             <h1 className="font-brutal font-semibold text-5xl md:text-7xl mt-2 text-white tracking-tight leading-none">
