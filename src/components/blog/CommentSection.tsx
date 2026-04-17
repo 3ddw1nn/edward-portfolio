@@ -393,16 +393,8 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
       {/* Comment list — Discord chat log style */}
       <div className="mb-4">
         {loading ? (
-          <div className="space-y-5 px-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="flex gap-4">
-                <div className="w-10 h-10 rounded-md bg-white/10 animate-pulse shrink-0" />
-                <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-3 w-24 bg-white/10 rounded animate-pulse" />
-                  <div className="h-3 w-48 bg-white/10 rounded animate-pulse" />
-                </div>
-              </div>
-            ))}
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm text-[#949ba4]">Loading comments…</p>
           </div>
         ) : comments.length === 0 ? (
           <div className="py-12 text-center">

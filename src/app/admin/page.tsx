@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { ImagePlus, Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
 const FALLBACK_DISPLAY_NAME = "Mystery Goblin";
@@ -22,6 +22,7 @@ type Post = {
   title: string;
   date: string;
   excerpt: string;
+  source: "mdx" | "supabase";
 };
 
 type Comment = {
@@ -46,11 +47,18 @@ export default function AdminPage() {
   const [readTime, setReadTime] = useState("5 min read");
   const [date, setDate]         = useState(new Date().toISOString().slice(0, 10));
   const [content, setContent]   = useState("");
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [imageUploadState, setImageUploadState] = useState<"idle" | "uploading" | "error">("idle");
+  const [imageUploadError, setImageUploadError] = useState("");
   const [postStatus, setPostStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [postError, setPostError]   = useState("");
 
   // Manage
   const [posts, setPosts]       = useState<Post[]>([]);
+  const [postsFetchError, setPostsFetchError] = useState("");
+  const [supabasePostsWarning, setSupabasePostsWarning] = useState<string | null>(null);
+  const [hiddenDupCount, setHiddenDupCount] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingPosts, setLoadingPosts]       = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -87,11 +95,28 @@ export default function AdminPage() {
   useEffect(() => {
     if (!authed || tab !== "posts") return;
     setLoadingPosts(true);
+    setPostsFetchError("");
     fetch("/api/admin/posts", {
       headers: { "x-admin-password": storedPw() },
     })
-      .then((r) => r.json())
-      .then((j) => setPosts(j.posts ?? []))
+      .then(async (r) => {
+        const j = (await r.json().catch(() => ({}))) as {
+          posts?: Post[];
+          supabaseError?: string | null;
+          hiddenDbDuplicateCount?: number;
+          error?: string;
+        };
+        if (!r.ok) throw new Error(j.error ?? "Failed to load posts");
+        setPosts(j.posts ?? []);
+        setSupabasePostsWarning(j.supabaseError ?? null);
+        setHiddenDupCount(
+          typeof j.hiddenDbDuplicateCount === "number" ? j.hiddenDbDuplicateCount : 0
+        );
+      })
+      .catch((e: unknown) => {
+        setPosts([]);
+        setPostsFetchError(e instanceof Error ? e.message : "Failed to load posts");
+      })
       .finally(() => setLoadingPosts(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed, tab]);
@@ -110,15 +135,68 @@ export default function AdminPage() {
 
   // ── Delete post ───────────────────────────────────────────────────────────
 
-  async function deletePost(slug: string) {
-    if (!confirm(`Delete "${slug}"? This cannot be undone.`)) return;
-    const res = await fetch(`/api/blog?slug=${encodeURIComponent(slug)}`, {
+  async function deletePost(post: Post) {
+    if (post.source === "mdx") return;
+    if (!confirm(`Delete "${post.slug}" from the database? This cannot be undone.`)) return;
+    const res = await fetch(`/api/blog?slug=${encodeURIComponent(post.slug)}`, {
       method: "DELETE",
       headers: { "x-admin-password": storedPw() },
     });
     if (res.ok) {
-      setPosts((prev) => prev.filter((p) => p.slug !== slug));
+      setPosts((prev) => prev.filter((p) => p.slug !== post.slug));
     }
+  }
+
+  async function handleBlogImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setImageUploadState("uploading");
+    setImageUploadError("");
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    const res = await fetch("/api/admin/upload", {
+      method: "POST",
+      headers: { "x-admin-password": storedPw() ?? "" },
+      body: fd,
+    });
+
+    const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+
+    if (!res.ok) {
+      setImageUploadError(json.error ?? "Upload failed");
+      setImageUploadState("error");
+      return;
+    }
+
+    const url = json.url;
+    if (!url) {
+      setImageUploadError("No URL returned");
+      setImageUploadState("error");
+      return;
+    }
+
+    const insert = `\n\n![Image](${url})\n`;
+    const ta = contentRef.current;
+    setContent((prev) => {
+      if (ta && typeof ta.selectionStart === "number") {
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd ?? start;
+        const next = prev.slice(0, start) + insert + prev.slice(end);
+        queueMicrotask(() => {
+          ta.focus();
+          const pos = start + insert.length;
+          ta.setSelectionRange(pos, pos);
+        });
+        return next;
+      }
+      return prev + insert;
+    });
+
+    setImageUploadState("idle");
   }
 
   // ── Delete comment ────────────────────────────────────────────────────────
@@ -275,9 +353,46 @@ export default function AdminPage() {
             </Field>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-brutal text-[9px] tracking-[0.25em] uppercase text-white/35">
+                Images
+              </span>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleBlogImageChange}
+              />
+              <button
+                type="button"
+                disabled={imageUploadState === "uploading"}
+                onClick={() => imageInputRef.current?.click()}
+                className="inline-flex items-center gap-2 border border-white/20 px-3 py-2 font-brutal text-[9px] tracking-[0.2em] uppercase text-white/70 hover:text-white hover:border-white/40 transition-colors disabled:opacity-40"
+              >
+                <ImagePlus className="h-3.5 w-3.5" />
+                {imageUploadState === "uploading" ? "Uploading…" : "Upload & insert"}
+              </button>
+              <span className="font-sans text-[11px] text-white/35">
+                Inserts markdown at the cursor (Supabase bucket <code className="text-white/50">blog-images</code>).
+              </span>
+            </div>
+            {imageUploadState === "error" && imageUploadError && (
+              <p className="font-brutal text-[9px] uppercase text-red-400">{imageUploadError}</p>
+            )}
+          </div>
+
           <Field label="Content (markdown) *">
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} required rows={24}
-              className={`${INPUT} font-mono resize-y leading-relaxed`} placeholder="Write your post in Markdown..." />
+            <textarea
+              ref={contentRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              required
+              rows={24}
+              className={`${INPUT} font-mono resize-y leading-relaxed`}
+              placeholder="Write your post in Markdown..."
+            />
           </Field>
 
           <button
@@ -293,10 +408,22 @@ export default function AdminPage() {
       {/* ── Tab: Manage posts ── */}
       {tab === "posts" && (
         <div>
+          {postsFetchError && (
+            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-red-400 mb-4">
+              {postsFetchError}
+            </p>
+          )}
+          {supabasePostsWarning && (
+            <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-amber-400/90 mb-4 leading-relaxed">
+              Database list error: {supabasePostsWarning} — MDX posts below still load from the repo manifest.
+            </p>
+          )}
           {loadingPosts ? (
             <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">Loading...</p>
           ) : posts.length === 0 ? (
-            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">No posts yet.</p>
+            <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">
+              No posts found (add MDX under src/content/blog or run supabase/posts.sql and publish from here).
+            </p>
           ) : (
             <div className="space-y-0">
               {posts.map((post) => (
@@ -305,6 +432,11 @@ export default function AdminPage() {
                   className="flex items-start justify-between gap-4 py-5 border-b border-white/10"
                 >
                   <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="inline-block font-brutal text-[8px] tracking-[0.2em] uppercase text-white/40 border border-white/15 rounded-sm px-2 py-0.5">
+                        {post.source === "mdx" ? "MDX file" : "Database"}
+                      </span>
+                    </div>
                     <p className="font-brutal text-sm text-white truncate">{post.title}</p>
                     <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/30 mt-1">
                       {post.slug} · {post.date}
@@ -318,20 +450,37 @@ export default function AdminPage() {
                     >
                       View
                     </Link>
-                    <button
-                      onClick={() => deletePost(post.slug)}
-                      className="text-white/20 hover:text-red-400 transition-colors"
-                      title="Delete post"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {post.source === "supabase" ? (
+                      <button
+                        type="button"
+                        onClick={() => deletePost(post)}
+                        className="text-white/20 hover:text-red-400 transition-colors"
+                        title="Delete post from database"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <span
+                        className="font-brutal text-[8px] tracking-[0.15em] uppercase text-white/15 max-w-[7rem] text-right leading-tight"
+                        title="Remove src/content/blog/{slug}.mdx to delete this post"
+                      >
+                        File-backed
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-          <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/20 mt-8">
-            MDX posts (the built-in ones) are not listed here — delete them by removing the file.
+          {hiddenDupCount > 0 && (
+            <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/25 mt-8 leading-relaxed">
+              {hiddenDupCount} database row(s) share a slug with an MDX file — the live site shows the MDX version.
+              Run <code className="text-white/45">pnpm seed:posts</code> to sync DB copies, or delete the duplicate DB rows.
+            </p>
+          )}
+          <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/20 mt-8 leading-relaxed">
+            MDX posts live in src/content/blog (regenerate manifest: pnpm prebuild). Database posts use the admin
+            &quot;New post&quot; form after running supabase/posts.sql.
           </p>
         </div>
       )}

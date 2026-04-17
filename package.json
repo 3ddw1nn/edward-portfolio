@@ -7,6 +7,8 @@
     "node": ">=20.0.0"
   },
   "scripts": {
+    "predev": "node scripts/generate-mdx-post-manifest.mjs",
+    "prebuild": "node scripts/generate-mdx-post-manifest.mjs",
     "dev": "next dev",
     "dev:turbo": "next dev --turbo",
     "dev:watch": "next dev",
@@ -14,7 +16,8 @@
     "start": "next start",
     "start:dev": "nodemon --watch 'src/**/*' --ext 'ts,tsx,js,jsx,json' --exec 'next build && next start'",
     "start:watch": "nodemon --watch 'src/**/*' --ext 'ts,tsx,js,jsx,json' --exec 'pnpm build && pnpm start'",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed:posts": "node --env-file=.env.local scripts/seed-posts-from-mdx.mjs"
   },
   "dependencies": {
     "@giphy/js-fetch-api": "^5.7.0",

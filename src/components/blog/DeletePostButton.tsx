@@ -6,7 +6,14 @@ import { Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
 
-export function DeletePostButton({ slug }: { slug: string }) {
+export function DeletePostButton({
+  slug,
+  canDeleteFromDb = true,
+}: {
+  slug: string;
+  /** File-backed MDX posts cannot be removed from the database UI; delete the .mdx file instead. */
+  canDeleteFromDb?: boolean;
+}) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const router = useRouter();
@@ -15,7 +22,7 @@ export function DeletePostButton({ slug }: { slug: string }) {
     setIsAdmin(!!localStorage.getItem(STORAGE_KEY));
   }, []);
 
-  if (!isAdmin) return null;
+  if (!isAdmin || !canDeleteFromDb) return null;
 
   async function handleDelete() {
     if (!confirming) {

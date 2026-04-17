@@ -1,7 +1,8 @@
+import type { ImgHTMLAttributes } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, MessageCircle } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getPostBySlug, getMdxSlugs } from "@/lib/blog";
+import { getAllPosts, getPostBySlug, getMdxSlugs } from "@/lib/blog";
 import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
@@ -9,10 +10,12 @@ import { DeletePostButton } from "@/components/blog/DeletePostButton";
 import { PostLikeButton } from "@/components/blog/PostLikeButton";
 
 export async function generateStaticParams() {
-  return getMdxSlugs().map((slug) => ({ slug }));
+  const posts = await getAllPosts();
+  return posts.map((p) => ({ slug: p.slug }));
 }
 
-export const dynamicParams = false;
+/** Allow new Supabase posts without redeploying (on-demand). */
+export const dynamicParams = true;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -43,6 +46,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   const engagement = await getSinglePostEngagement(slug, null);
+  const isMdxBacked = getMdxSlugs().includes(slug);
 
   return (
     <div className="w-full min-h-screen bg-black text-white">
@@ -60,7 +64,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
               All posts
             </Link>
-            <DeletePostButton slug={slug} />
+            <DeletePostButton slug={slug} canDeleteFromDb={!isMdxBacked} />
           </div>
 
           {/* Tags */}
@@ -112,7 +116,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* Article body */}
       <div className="container mx-auto px-4 md:px-8 max-w-3xl py-14">
         <div className="prose-blog">
-          <MDXRemote source={post.content} />
+          <MDXRemote
+            source={post.content}
+            components={{
+              img: (props: ImgHTMLAttributes<HTMLImageElement>) => (
+                // eslint-disable-next-line @next/next/no-img-element -- remote blog uploads (Supabase etc.)
+                <img
+                  {...props}
+                  alt={props.alt ?? ""}
+                  className="my-8 max-w-full h-auto rounded-lg border border-white/10"
+                />
+              ),
+            }}
+          />
         </div>
 
         <section className="mt-12 border-t border-white/[0.06] pt-8" aria-label="Post reactions">
