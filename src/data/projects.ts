@@ -33,7 +33,7 @@ export const projects: AppProject[] = [
   {
     id: 5,
     title: "Content Farmer",
-    year: "2025-2026",
+    year: "2026",
     description:
       "Creator-operations dashboard for multi-account YouTube management, performance visibility, and a roadmapped content pipeline.",
     longDescription:
@@ -57,7 +57,7 @@ export const projects: AppProject[] = [
       "Scaffolded “create content” pipeline (research → script → generation → publish) on a foundation of real auth, data model, and integrations",
     ],
     url: "https://github.com/3ddw1nn/content-farmer",
-    screenshotUrl: "/images/blog-background.jpg",
+    screenshotUrl: "/images/contentfarmer-screenshot.png",
     category: "web",
   },
   {
