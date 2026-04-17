@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Heart, MessageCircle, Search, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { PostMeta } from "@/lib/blog";
@@ -11,48 +10,89 @@ import type { PostEngagement } from "@/lib/engagement";
 import { formatPostDate } from "@/lib/format-date";
 import { Pagination } from "@/components/ui/Pagination";
 
-/** Preserves the search `q` across pagination links. */
-function buildBlogHref(page: number, q: string): string {
+const BLOG_PAGE_SIZE = 10;
+
+function matchesQuery(p: PostMeta, qLower: string): boolean {
+  if (!qLower) return true;
+  if (p.title.toLowerCase().includes(qLower)) return true;
+  return p.tags.some((tag) => tag.toLowerCase().includes(qLower));
+}
+
+/** Mutates the URL without navigating, so no server refetch / animation replay. */
+function syncUrl(query: string, page: number) {
+  if (typeof window === "undefined") return;
   const params = new URLSearchParams();
-  if (q.trim()) params.set("q", q.trim());
+  if (query.trim()) params.set("q", query.trim());
   if (page > 1) params.set("page", String(page));
   const qs = params.toString();
-  return qs ? `/blog?${qs}` : "/blog";
+  const next = qs ? `/blog?${qs}` : "/blog";
+  window.history.replaceState(window.history.state, "", next);
 }
 
 export function BlogPageContent({
-  posts,
+  posts: allPosts,
   engagement,
-  page,
-  pageCount,
-  totalPosts,
-  query,
+  initialQuery,
+  initialPage,
 }: {
   posts: PostMeta[];
   engagement: Record<string, PostEngagement>;
-  page: number;
-  pageCount: number;
-  totalPosts: number;
-  query: string;
+  initialQuery: string;
+  initialPage: number;
 }) {
-  const router = useRouter();
-  // Keep a local draft so typing feels snappy, and only commit to the URL on
-  // submit / clear. The draft resyncs whenever the URL-driven `query` changes
-  // (e.g. user hits back/forward).
-  const [draft, setDraft] = useState(query);
+  // `query` is the committed search (drives filtering); `draft` is what's in the input.
+  // Typing updates both immediately so filtering feels live.
+  const [query, setQuery] = useState(initialQuery);
+  const [draft, setDraft] = useState(initialQuery);
+  const [page, setPage] = useState(initialPage);
+
+  const filtered = useMemo(() => {
+    const qLower = query.trim().toLowerCase();
+    return qLower ? allPosts.filter((p) => matchesQuery(p, qLower)) : allPosts;
+  }, [allPosts, query]);
+
+  const totalFiltered = filtered.length;
+  const pageCount = Math.max(1, Math.ceil(totalFiltered / BLOG_PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const start = (safePage - 1) * BLOG_PAGE_SIZE;
+  const pagePosts = filtered.slice(start, start + BLOG_PAGE_SIZE);
+
+  // Keep the URL in sync whenever the committed query or page changes.
   useEffect(() => {
-    setDraft(query);
-  }, [query]);
+    syncUrl(query, safePage);
+  }, [query, safePage]);
+
+  const commitSearch = useCallback((nextQuery: string) => {
+    setQuery(nextQuery);
+    setPage(1);
+  }, []);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const next = draft.trim();
-    router.push(buildBlogHref(1, next));
+    commitSearch(draft.trim());
   }
 
-  function handleClear() {
+  function handleClearInput() {
     setDraft("");
-    if (query) router.push("/blog");
+    commitSearch("");
+  }
+
+  function handleShowAll() {
+    setDraft("");
+    commitSearch("");
+    setPage(1);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function handlePageChange(p: number) {
+    setPage(p);
+    if (typeof window !== "undefined") {
+      // Scroll back up to the top of the list area when paging.
+      const el = document.getElementById("posts-list");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }
 
   const hasQuery = query.trim().length > 0;
@@ -62,8 +102,6 @@ export function BlogPageContent({
 
       {/* Hero header */}
       <div className="relative w-full h-[70vh] min-h-[480px] flex flex-col justify-end overflow-hidden">
-
-        {/* Painting — slow scale-up on enter */}
         <motion.div
           className="absolute inset-0 z-0"
           initial={{ scale: 1.08, opacity: 0 }}
@@ -76,7 +114,6 @@ export function BlogPageContent({
           }}
         />
 
-        {/* Gradient overlay — fades in slightly after image */}
         <motion.div
           className="absolute inset-0 z-[1] bg-gradient-to-b from-black/70 via-black/30 to-black"
           initial={{ opacity: 0 }}
@@ -84,7 +121,6 @@ export function BlogPageContent({
           transition={{ duration: 1, delay: 0.2 }}
         />
 
-        {/* Text — staggered slide up */}
         <div className="relative z-[2] container mx-auto px-4 md:px-6 pb-14 md:pb-20">
           <div className="overflow-hidden">
             <motion.h1
@@ -128,7 +164,7 @@ export function BlogPageContent({
               aria-hidden
             />
             <input
-              type="search"
+              type="text"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Search by title or tag…"
@@ -138,7 +174,7 @@ export function BlogPageContent({
             {draft && (
               <button
                 type="button"
-                onClick={handleClear}
+                onClick={handleClearInput}
                 aria-label="Clear search"
                 className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-white/45 transition hover:bg-white/10 hover:text-white"
               >
@@ -146,17 +182,29 @@ export function BlogPageContent({
               </button>
             )}
           </div>
-          <p className="font-brutal text-[10px] tracking-[0.18em] uppercase text-white/35">
-            {hasQuery
-              ? `${totalPosts} match${totalPosts === 1 ? "" : "es"} for “${query}”`
-              : `${totalPosts} post${totalPosts === 1 ? "" : "s"}`}
-          </p>
+
+          <div className="flex items-center gap-4">
+            <p className="font-brutal text-[10px] tracking-[0.18em] uppercase text-white/35">
+              {hasQuery
+                ? `${totalFiltered} match${totalFiltered === 1 ? "" : "es"} for “${query}”`
+                : `${totalFiltered} post${totalFiltered === 1 ? "" : "s"}`}
+            </p>
+            {hasQuery && (
+              <button
+                type="button"
+                onClick={handleShowAll}
+                className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/70 underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Show all posts
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
-      {/* Posts list — cascade in */}
-      <div className="relative z-10 container mx-auto px-4 md:px-6">
-        {posts.length === 0 ? (
+      {/* Posts list */}
+      <div id="posts-list" className="relative z-10 container mx-auto px-4 md:px-6 scroll-mt-4">
+        {pagePosts.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-sm text-white/55">
               No posts match{" "}
@@ -164,20 +212,15 @@ export function BlogPageContent({
             </p>
             <button
               type="button"
-              onClick={handleClear}
-              className="mt-4 font-brutal text-[10px] tracking-[0.2em] uppercase text-white/55 underline-offset-4 transition hover:text-white hover:underline"
+              onClick={handleShowAll}
+              className="mt-4 font-brutal text-[10px] tracking-[0.2em] uppercase text-white/70 underline-offset-4 transition hover:text-white hover:underline"
             >
-              Clear search
+              Show all posts
             </button>
           </div>
         ) : (
-          posts.map((post, i) => (
-            <motion.div
-              key={post.slug}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 + i * 0.05, ease: "easeOut" }}
-            >
+          pagePosts.map((post) => (
+            <div key={post.slug}>
               <Link
                 href={`/blog/${post.slug}`}
                 className="group flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 py-10 border-b border-white/10 hover:border-white/30 transition-colors duration-300"
@@ -230,15 +273,15 @@ export function BlogPageContent({
                   <ArrowUpRight className="h-4 w-4 text-white/30 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 hidden sm:block" />
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))
         )}
 
         <Pagination
-          mode="link"
-          page={page}
+          mode="button"
+          page={safePage}
           pageCount={pageCount}
-          buildHref={(p) => buildBlogHref(p, query)}
+          onPageChange={handlePageChange}
           className="pb-16 pt-8"
         />
       </div>
