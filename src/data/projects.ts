@@ -35,9 +35,9 @@ export const projects: AppProject[] = [
     title: "Content Farmer",
     year: "2026",
     description:
-      "Creator-operations dashboard for multi-account YouTube management, performance visibility, and a roadmapped content pipeline.",
+      "AI platform for turning trends into video plans and drafts, plus a creator-operations dashboard for multi-account YouTube management, performance visibility, and a publish-ready pipeline.",
     longDescription:
-      "Content Farmer is a full-stack monorepo (Next.js frontend, NestJS API) shaped like an internal ops product: Supabase-backed auth with email verification and password reset, a protected dashboard, workspaces and connected accounts, and sync for channel and video metadata (thumbnails, titles, stats). Revenue-oriented views (overview, by channel, by video) sit alongside drafts for in-progress work, audit logging for sensitive actions, and a “Create content” flow that moves toward research → script → generation → publish. YouTube ships first; the architecture is modular so more platforms and deeper AI-assisted workflows can land over time without rewriting the core.",
+      "Content Farmer is an AI platform for creators—discover what is trending, shape a plan, and move through research → script → generation → publish—backed by a full-stack monorepo (Next.js frontend, NestJS API) shaped like an internal ops product. Supabase-backed auth with email verification and password reset, a protected dashboard, workspaces and connected accounts, and sync for channel and video metadata (thumbnails, titles, stats) sit alongside revenue-oriented views (overview, by channel, by video), drafts for in-progress work, audit logging for sensitive actions, and a “Create content” flow wired to that AI-led pipeline. YouTube ships first; the architecture is modular so more platforms and deeper model-driven workflows can land over time without rewriting the core.",
     technologies: [
       "TypeScript",
       "Next.js",
@@ -50,6 +50,7 @@ export const projects: AppProject[] = [
       "Docker",
     ],
     features: [
+      "AI-led content pipeline: trend-aware ideation through scripting and generation into a managed publish path",
       "Multi-workspace dashboard with JWT-backed API access and encrypted OAuth token handling",
       "Channel and video sync with browsable metadata and revenue-oriented reporting surfaces",
       "Drafts, audit logs, and guardrails around high-impact actions",
