@@ -8,7 +8,7 @@
  * Run: pnpm seed:posts   (same as node --env-file=.env.local scripts/seed-posts-from-mdx.mjs)
  *
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
- * Prerequisite: run supabase/posts.sql in the SQL editor.
+ * Prerequisite: run supabase/schema_seed.sql in the Supabase SQL editor (new project).
  */
 import fs from "fs";
 import path from "path";

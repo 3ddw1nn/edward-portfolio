@@ -577,8 +577,8 @@ export default function AdminPage() {
             <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">Loading...</p>
           ) : posts.length === 0 ? (
             <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">
-              No posts found. Run supabase/posts.sql, then publish from New post — or add optional .mdx files under
-              src/content/blog.
+              No posts found. Run <code className="text-white/45">supabase/schema_seed.sql</code> in Supabase, then
+              publish from New post — or add optional .mdx files under src/content/blog.
             </p>
           ) : (
             <div className="space-y-0">
