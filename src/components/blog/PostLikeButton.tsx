@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 type Props = {
   slug: string;
   initialLikeCount: number;
-  /** `hero` = large CTA (e.g. end of article); `inline` = compact (default). */
+  /** `hero` = end-of-article CTA (slightly emphasized, left-aligned); `inline` = compact (default). */
   size?: "inline" | "hero";
 };
 
@@ -73,8 +73,8 @@ export function PostLikeButton({ slug, initialLikeCount, size = "inline" }: Prop
   return (
     <div
       className={cn(
-        "flex flex-col gap-2",
-        hero ? "w-full max-w-md items-center text-center" : "inline-flex items-start gap-1"
+        "flex flex-col gap-1.5",
+        hero ? "w-full items-start text-left" : "inline-flex items-start gap-1"
       )}
     >
       <button
@@ -82,10 +82,10 @@ export function PostLikeButton({ slug, initialLikeCount, size = "inline" }: Prop
         onClick={toggle}
         disabled={loading || pending}
         className={cn(
-          "inline-flex items-center justify-center font-brutal uppercase tracking-wide transition-colors disabled:opacity-50",
+          "inline-flex items-center gap-2 font-brutal uppercase tracking-wide transition-colors disabled:opacity-50",
           hero
-            ? "gap-3 rounded-xl border-2 border-white/20 bg-white/[0.06] px-10 py-5 text-sm text-white/80 hover:border-white/35 hover:bg-white/[0.1] hover:text-white md:px-12 md:py-6 md:text-base"
-            : "gap-2 rounded-md border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
+            ? "rounded-md border border-white/10 bg-white/[0.02] px-3 py-2 text-[10px] tracking-[0.12em] text-white/50 hover:border-white/16 hover:bg-white/[0.04] hover:text-white/70"
+            : "rounded-md border border-white/15 bg-white/[0.03] px-3 py-2 text-xs text-white/70 hover:border-white/25 hover:bg-white/[0.06] hover:text-white"
         )}
         aria-pressed={liked}
         aria-label={liked ? "Unlike this post" : "Like this post"}
@@ -93,11 +93,11 @@ export function PostLikeButton({ slug, initialLikeCount, size = "inline" }: Prop
         <Heart
           className={cn(
             "shrink-0 transition-colors",
-            hero ? "h-7 w-7 md:h-8 md:w-8" : "h-4 w-4",
-            liked ? "fill-red-400 text-red-400" : "text-white/50"
+            hero ? "h-3.5 w-3.5" : "h-4 w-4",
+            liked ? "fill-red-400 text-red-400" : "text-white/40"
           )}
         />
-        <span className={hero ? "text-white/70" : "text-[10px] text-white/45"}>
+        <span className={hero ? "text-white/45" : "text-[10px] text-white/45"}>
           {loading ? "…" : `${likeCount} like${likeCount === 1 ? "" : "s"}`}
         </span>
       </button>
@@ -105,7 +105,7 @@ export function PostLikeButton({ slug, initialLikeCount, size = "inline" }: Prop
         <p
           className={cn(
             "text-[10px] leading-snug text-red-400/90",
-            hero ? "max-w-md px-2" : "max-w-xs"
+            hero ? "max-w-lg" : "max-w-xs"
           )}
           role="alert"
         >

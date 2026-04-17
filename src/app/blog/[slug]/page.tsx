@@ -115,11 +115,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <MDXRemote source={post.content} />
         </div>
 
-        <section className="mt-16 border-t border-white/10 pt-12" aria-label="Post reactions">
-          <p className="text-center font-brutal text-[10px] uppercase tracking-[0.25em] text-white/40">
+        <section className="mt-12 border-t border-white/[0.06] pt-8" aria-label="Post reactions">
+          <p className="font-brutal text-[9px] uppercase tracking-[0.2em] text-white/35">
             Enjoyed this post?
           </p>
-          <div className="mt-5 flex justify-center">
+          <div className="mt-2.5">
             <PostLikeButton slug={slug} initialLikeCount={engagement.likeCount} size="hero" />
           </div>
         </section>
