@@ -17,30 +17,31 @@ function mergeAdminPosts(
   mdxPosts: typeof mdxManifest.posts,
   dbRows: { id: string; slug: string; title: string; date: string; excerpt: string }[]
 ): { posts: AdminPostRow[]; hiddenDbDuplicateCount: number } {
-  const mdxList: AdminPostRow[] = mdxPosts.map((p) => ({
-    id: `mdx:${p.slug}`,
-    slug: p.slug,
-    title: p.title,
-    date: p.date,
-    excerpt: p.excerpt,
-    source: "mdx",
+  const mdxSlugs = new Set(mdxPosts.map((p) => p.slug));
+  const dbBySlug = new Map(dbRows.map((r) => [r.slug, r]));
+
+  const dbBacked: AdminPostRow[] = dbRows.map((r) => ({
+    id: r.id,
+    slug: r.slug,
+    title: r.title,
+    date: r.date,
+    excerpt: r.excerpt,
+    source: "supabase" as const,
   }));
-  const mdxSlugs = new Set(mdxList.map((p) => p.slug));
 
-  const hiddenDbDuplicateCount = dbRows.filter((r) => mdxSlugs.has(r.slug)).length;
-
-  const dbOnly: AdminPostRow[] = dbRows
-    .filter((r) => !mdxSlugs.has(r.slug))
-    .map((r) => ({
-      id: r.id,
-      slug: r.slug,
-      title: r.title,
-      date: r.date,
-      excerpt: r.excerpt,
-      source: "supabase" as const,
+  const mdxOnly: AdminPostRow[] = mdxPosts
+    .filter((p) => !dbBySlug.has(p.slug))
+    .map((p) => ({
+      id: `mdx:${p.slug}`,
+      slug: p.slug,
+      title: p.title,
+      date: p.date,
+      excerpt: p.excerpt,
+      source: "mdx" as const,
     }));
 
-  const merged = [...mdxList, ...dbOnly].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const merged = [...dbBacked, ...mdxOnly].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const hiddenDbDuplicateCount = dbRows.filter((r) => mdxSlugs.has(r.slug)).length;
 
   return { posts: merged, hiddenDbDuplicateCount };
 }

@@ -1,10 +1,9 @@
 /**
  * Upserts all src/content/blog/*.mdx rows into public.posts (same slugs as files).
  *
- * The blog always loads the .mdx file when that file exists (MDX wins over Supabase).
- * Seeding does not switch the live page to "database mode" by itself — it syncs a DB
- * copy for Manage posts / backup / future migration. To edit a post in admin only,
- * seed then remove or rename the .mdx so getPostBySlug falls back to Supabase.
+ * The blog loads a Supabase row when one exists for the slug; otherwise it uses the
+ * .mdx file. After seeding, seeded posts are editable in admin and served from the DB
+ * even if the .mdx file remains (keep file + DB in sync, or re-seed after editing MDX).
  *
  * Run: pnpm seed:posts   (same as node --env-file=.env.local scripts/seed-posts-from-mdx.mjs)
  *

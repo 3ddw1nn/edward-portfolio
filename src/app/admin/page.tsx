@@ -641,8 +641,9 @@ export default function AdminPage() {
           )}
           {hiddenDupCount > 0 && (
             <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/25 mt-8 leading-relaxed">
-              {hiddenDupCount} database row(s) share a slug with an MDX file — the live site shows the MDX version.
-              Run <code className="text-white/45">pnpm seed:posts</code> to sync DB copies, or delete the duplicate DB rows.
+              {hiddenDupCount} slug(s) have both an MDX file and a database row — the live site uses the{" "}
+              <span className="text-white/55">database</span> copy. Keep them in sync (edit in admin or re-run{" "}
+              <code className="text-white/45">pnpm seed:posts</code> after changing the file), or remove one source.
             </p>
           )}
           <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/20 mt-8 leading-relaxed">

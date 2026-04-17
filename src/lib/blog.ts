@@ -76,39 +76,38 @@ export async function getAllPosts(): Promise<PostMeta[]> {
     source: "supabase" as const,
   }));
 
-  // Merge, deduplicate (MDX takes precedence), sort by date desc
-  const slugsSeen = new Set(mdxPosts.map((p) => p.slug));
-  const merged = [
-    ...mdxPosts,
-    ...supabasePosts.filter((p) => !slugsSeen.has(p.slug)),
-  ];
-  return merged.sort((a, b) => (a.date < b.date ? 1 : -1));
+  // Merge: if a slug exists in Supabase, that row wins (admin edits + seed target DB).
+  // MDX-only slugs still come from files.
+  const bySlug = new Map<string, PostMeta>();
+  for (const p of mdxPosts) bySlug.set(p.slug, p);
+  for (const p of supabasePosts) bySlug.set(p.slug, p);
+  return [...bySlug.values()].sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export async function getPostBySlug(slug: string): Promise<Post> {
-  // Try MDX first
-  const mdx = getMdxPostBySlug(slug);
-  if (mdx) return mdx;
-
-  // Fall back to Supabase
   const { data, error } = await supabase
     .from("posts")
     .select("*")
     .eq("slug", slug)
     .single();
 
-  if (error || !data) throw new Error(`Post not found: ${slug}`);
+  if (!error && data) {
+    return {
+      slug: data.slug,
+      title: data.title,
+      date: data.date,
+      excerpt: data.excerpt,
+      tags: data.tags ?? [],
+      readTime: data.read_time,
+      content: data.content,
+      source: "supabase" as const,
+    };
+  }
 
-  return {
-    slug: data.slug,
-    title: data.title,
-    date: data.date,
-    excerpt: data.excerpt,
-    tags: data.tags ?? [],
-    readTime: data.read_time,
-    content: data.content,
-    source: "supabase" as const,
-  };
+  const mdx = getMdxPostBySlug(slug);
+  if (mdx) return mdx;
+
+  throw new Error(`Post not found: ${slug}`);
 }
 
 // Static MDX slugs only — Supabase posts render dynamically
