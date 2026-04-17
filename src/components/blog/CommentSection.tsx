@@ -121,6 +121,17 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Matches the Tailwind `sm:` breakpoint (640px). On mobile we render a
+  // flat two-level thread; on desktop we keep the full nested chain.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   const textareaRef                       = useRef<HTMLTextAreaElement>(null);
   const gifBtnRef                         = useRef<HTMLButtonElement>(null);
   const sentinelRef                       = useRef<HTMLDivElement>(null);
@@ -296,14 +307,44 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
 
   const canSend = body.trim().length > 0 || !!selectedGif;
   const topLevelComments = comments.filter((comment) => !comment.reply_to_id);
+
+  // Desktop keeps the full nested thread (direct children per parent).
   const repliesByParent = comments.reduce<Record<string, Comment[]>>((acc, comment) => {
     if (!comment.reply_to_id) return acc;
-    if (!acc[comment.reply_to_id]) {
-      acc[comment.reply_to_id] = [];
-    }
+    if (!acc[comment.reply_to_id]) acc[comment.reply_to_id] = [];
     acc[comment.reply_to_id].push(comment);
     return acc;
   }, {});
+
+  // Mobile flattens any reply chain into a single list under its top-level
+  // ancestor: no more than two visible levels (comment + its flat thread).
+  // If someone replies to a reply-of-a-reply, they still land in the same
+  // thread on mobile — the `@reply_to_name` mention preserves context.
+  const commentById = new Map(comments.map((c) => [c.id, c]));
+  function rootIdOf(c: Comment): string {
+    let cur: Comment | undefined = c;
+    const visited = new Set<string>();
+    while (cur && cur.reply_to_id && !visited.has(cur.id)) {
+      visited.add(cur.id);
+      const parent = commentById.get(cur.reply_to_id);
+      if (!parent) return cur.id;
+      cur = parent;
+    }
+    return cur ? cur.id : c.id;
+  }
+  const descendantsByRoot: Record<string, Comment[]> = {};
+  for (const c of comments) {
+    if (!c.reply_to_id) continue;
+    const root = rootIdOf(c);
+    if (!root || root === c.id) continue;
+    if (!descendantsByRoot[root]) descendantsByRoot[root] = [];
+    descendantsByRoot[root].push(c);
+  }
+  for (const list of Object.values(descendantsByRoot)) {
+    list.sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }
 
   function handleReply(comment: Comment) {
     const targetName = comment.name || FALLBACK_DISPLAY_NAME;
@@ -319,15 +360,26 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   }
 
   function renderComment(comment: Comment, isReply = false) {
-    const replies = repliesByParent[comment.id] ?? [];
+    // On mobile we only expose replies at the root level (flat thread). On
+    // desktop every comment can render its own nested children as before.
+    const replies = isMobile
+      ? !isReply
+        ? descendantsByRoot[comment.id] ?? []
+        : []
+      : repliesByParent[comment.id] ?? [];
     const isThreadExpanded = !!expandedThreads[comment.id];
-    // Tighter indents on mobile so long names + GIFs don't get squeezed.
-    const guideIndentClass = isReply ? "ml-10 sm:ml-28" : "ml-6 sm:ml-14";
+    // Mobile uses a tighter single-level indent; desktop keeps the original
+    // nested indentation because we still render true nesting there.
+    const guideIndentClass = isMobile
+      ? "ml-4"
+      : isReply
+      ? "ml-28"
+      : "ml-14";
 
     return (
       <div key={comment.id}>
         <div
-          className={`group flex gap-2 sm:gap-4 px-1 sm:px-4 py-2 rounded-md hover:bg-white/[0.03] transition-colors duration-100 relative ${isReply ? "ml-6 sm:ml-14" : ""}`}
+          className={`group flex gap-2 sm:gap-4 px-1 sm:px-4 py-2 rounded-md hover:bg-white/[0.03] transition-colors duration-100 relative ${isReply ? "ml-4 sm:ml-14" : ""}`}
           onMouseEnter={() => setHoveredId(comment.id)}
           onMouseLeave={() => setHoveredId(null)}
         >
@@ -444,7 +496,7 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
             </div>
 
             {isThreadExpanded && (
-              <div className={`${guideIndentClass} border-l border-[#3f4147] pl-4`}>
+              <div className={`${guideIndentClass} border-l border-[#3f4147] pl-3 sm:pl-4`}>
                 {replies.map((reply) => renderComment(reply, true))}
               </div>
             )}
