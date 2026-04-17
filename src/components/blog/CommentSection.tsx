@@ -238,7 +238,24 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
       method: "DELETE",
       headers: { "x-admin-password": pw },
     });
-    if (res.ok) setComments((prev) => prev.filter((c) => c.id !== id));
+    if (res.ok) {
+      // Server cascade-deletes all descendant replies; mirror that locally so the
+      // whole sub-thread disappears without waiting for a refresh.
+      setComments((prev) => {
+        const toRemove = new Set<string>([id]);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const c of prev) {
+            if (!toRemove.has(c.id) && c.reply_to_id && toRemove.has(c.reply_to_id)) {
+              toRemove.add(c.id);
+              changed = true;
+            }
+          }
+        }
+        return prev.filter((c) => !toRemove.has(c.id));
+      });
+    }
   }
 
   async function submit() {

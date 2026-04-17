@@ -609,9 +609,17 @@ export default function AdminPage() {
     });
     if (!res.ok) return;
 
-    // Re-fetch the current page so counts, pagination, and threaded-reply
-    // cascades (the server deletes descendants too) stay in sync.
-    const nextTotal = Math.max(0, commentsTotal - 1);
+    // Server cascade-deletes replies too; use `deleted` from the response so
+    // we recalc pagination based on the actual number of rows removed.
+    let deletedCount = 1;
+    try {
+      const j = await res.clone().json();
+      if (typeof j?.deleted === "number" && j.deleted > 0) deletedCount = j.deleted;
+    } catch {
+      // Ignore — fall back to 1.
+    }
+
+    const nextTotal = Math.max(0, commentsTotal - deletedCount);
     const nextPageCount = Math.max(1, Math.ceil(nextTotal / COMMENTS_PAGE_SIZE));
     if (commentsPage > nextPageCount) {
       setCommentsPage(nextPageCount);

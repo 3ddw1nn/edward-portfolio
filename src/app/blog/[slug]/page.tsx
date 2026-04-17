@@ -18,6 +18,12 @@ export async function generateStaticParams() {
 /** Allow new Supabase posts without redeploying (on-demand). */
 export const dynamicParams = true;
 
+// Render server-side on every request so engagement counts (comments, likes)
+// and the `updated_at` timestamp reflect the latest DB state after admin
+// deletes / edits, instead of being frozen at build time.
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   try {
