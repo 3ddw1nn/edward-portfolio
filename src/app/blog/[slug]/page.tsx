@@ -7,6 +7,7 @@ import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { DeletePostButton } from "@/components/blog/DeletePostButton";
+import { EditPostButton } from "@/components/blog/EditPostButton";
 import { PostLikeButton } from "@/components/blog/PostLikeButton";
 
 export async function generateStaticParams() {
@@ -56,7 +57,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="container mx-auto px-4 md:px-8 max-w-3xl">
 
           {/* Nav row */}
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center justify-between mb-12 gap-4">
             <Link
               href="/blog"
               className="inline-flex items-center gap-2 text-xs text-white/50 hover:text-white transition-colors duration-200 group"
@@ -64,7 +65,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
               All posts
             </Link>
-            <DeletePostButton slug={slug} canDeleteFromDb={!isMdxBacked} />
+            <div className="flex items-center gap-4 shrink-0">
+              <EditPostButton slug={slug} canEditFromDb={!isMdxBacked} />
+              <DeletePostButton slug={slug} canDeleteFromDb={!isMdxBacked} />
+            </div>
           </div>
 
           {/* Tags */}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { AdminEditFromUrl } from "./AdminEditFromUrl";
 import { ImagePlus, Pencil, Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
@@ -170,7 +171,7 @@ export default function AdminPage() {
     setDate(new Date().toISOString().slice(0, 10));
   }
 
-  async function loadPostForEdit(postSlug: string) {
+  async function loadPostForEdit(postSlug: string): Promise<boolean> {
     setPostStatus("idle");
     setPostError("");
     setPostsActionError("");
@@ -191,14 +192,17 @@ export default function AdminPage() {
       };
       error?: string;
     };
+    const errMsg = json.error ?? "Could not load post";
     if (!res.ok) {
-      setPostsActionError(json.error ?? "Could not load post");
-      return;
+      setPostsActionError(errMsg);
+      setPostError(errMsg);
+      return false;
     }
     const p = json.post;
     if (!p) {
-      setPostsActionError("Could not load post");
-      return;
+      setPostsActionError(errMsg);
+      setPostError(errMsg);
+      return false;
     }
     setEditingSlug(p.slug);
     setTitle(p.title);
@@ -209,6 +213,7 @@ export default function AdminPage() {
     setDate(p.date);
     setContent(p.content ?? "");
     setTab("new");
+    return true;
   }
 
   async function handleBlogImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -392,6 +397,9 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
+      <Suspense fallback={null}>
+        <AdminEditFromUrl authed={authed} loadPostForEdit={loadPostForEdit} />
+      </Suspense>
 
       {/* Top bar */}
       <div className="flex items-center justify-between mb-10">
