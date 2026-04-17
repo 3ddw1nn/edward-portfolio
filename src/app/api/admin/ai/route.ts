@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveOpenAiChatModel } from "@/lib/openai-chat-models";
 
 export const runtime = "nodejs";
 
 type Action = "autofillEmpty" | "improveContent" | "fromPrompt";
-
-const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
 /** Remove markdown images / HTML img so AI never injects image URLs */
 function stripImageMarkdown(md: string): string {
@@ -22,7 +21,11 @@ function parseJsonFromAssistant(content: string): Record<string, unknown> {
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
-async function openaiChatJson(system: string, user: string): Promise<Record<string, unknown>> {
+async function openaiChatJson(
+  system: string,
+  user: string,
+  model: string
+): Promise<Record<string, unknown>> {
   const key = process.env.OPENAI_API_KEY;
   if (!key || key.includes("mock")) {
     throw new Error("OPENAI_API_KEY is not set (add a real key in .env.local; see .env.example)");
@@ -35,7 +38,7 @@ async function openaiChatJson(system: string, user: string): Promise<Record<stri
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       temperature: 0.5,
       response_format: { type: "json_object" },
       messages: [
@@ -67,6 +70,8 @@ export async function POST(req: NextRequest) {
 
   let body: {
     action?: Action;
+    /** Must be in OPENAI_CHAT_MODEL_IDS; otherwise server uses OPENAI_MODEL or gpt-4o-mini */
+    model?: string;
     /** Current form snapshot (autofill / fromPrompt context) */
     context?: Record<string, unknown>;
     /** Keys the model may return for autofillEmpty */
@@ -86,6 +91,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
+  const model = resolveOpenAiChatModel(body.model);
+
   try {
     if (action === "improveContent") {
       const raw = typeof body.content === "string" ? body.content : "";
@@ -98,7 +105,8 @@ Rules: keep headings and structure sensible; fix clarity and flow; do NOT add im
 
       const out = await openaiChatJson(
         system,
-        `Improve this markdown (no images):\n\n${raw.slice(0, 120_000)}`
+        `Improve this markdown (no images):\n\n${raw.slice(0, 120_000)}`,
+        model
       );
       const content = typeof out.content === "string" ? stripImageMarkdown(out.content) : "";
       if (!content) throw new Error("Model returned no content");
@@ -119,7 +127,7 @@ Do NOT return a "content" key.`;
 
       const user = `Fill only the listed empty fields. Context (may include partial content for tone — do not echo it back):\n${JSON.stringify(ctx, null, 2)}`;
 
-      const out = await openaiChatJson(system, user);
+      const out = await openaiChatJson(system, user, model);
       const cleaned: Record<string, unknown> = {};
       for (const k of fillKeys) {
         if (k in out && k !== "content") cleaned[k] = out[k];
@@ -137,7 +145,7 @@ Do NOT return a "content" key.`;
 title, slug (kebab-case), excerpt (1-2 sentences), tags (array of 2-6 strings), read_time (e.g. "7 min read"), date (YYYY-MM-DD), content (markdown body).
 Rules: content must be substantive markdown with headings where helpful; NEVER include images, ![alt](url), or bare image URLs — the author uploads images separately.`;
 
-      const out = await openaiChatJson(system, `Idea / instructions:\n${prompt.slice(0, 20_000)}`);
+      const out = await openaiChatJson(system, `Idea / instructions:\n${prompt.slice(0, 20_000)}`, model);
 
       const content =
         typeof out.content === "string" ? stripImageMarkdown(out.content) : "";

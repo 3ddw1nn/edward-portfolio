@@ -16,8 +16,14 @@ import {
   Trash2,
   Wand2,
 } from "lucide-react";
+import {
+  DEFAULT_OPENAI_CHAT_MODEL,
+  OPENAI_CHAT_MODEL_IDS,
+  OPENAI_CHAT_MODELS,
+} from "@/lib/openai-chat-models";
 
 const STORAGE_KEY = "admin_pw";
+const OPENAI_MODEL_STORAGE_KEY = "admin_openai_model";
 const FALLBACK_DISPLAY_NAME = "Mystery Goblin";
 
 /** Body copy: 14px+; small UI chrome: 12px minimum */
@@ -92,6 +98,7 @@ export default function AdminPage() {
   const [generatorPrompt, setGeneratorPrompt] = useState("");
   const [aiBusy, setAiBusy] = useState<null | "autofill" | "prompt" | "polish">(null);
   const [aiError, setAiError] = useState("");
+  const [openAiModel, setOpenAiModel] = useState(DEFAULT_OPENAI_CHAT_MODEL);
   const [imageUploadState, setImageUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [imageUploadError, setImageUploadError] = useState("");
   const [postStatus, setPostStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
@@ -112,6 +119,11 @@ export default function AdminPage() {
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) setAuthed(true);
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(OPENAI_MODEL_STORAGE_KEY);
+    if (saved && OPENAI_CHAT_MODEL_IDS.includes(saved)) setOpenAiModel(saved);
   }, []);
 
   useEffect(() => {
@@ -141,6 +153,13 @@ export default function AdminPage() {
     setPw("");
   }
 
+  function persistOpenAiModel(id: string) {
+    setOpenAiModel(id);
+    if (OPENAI_CHAT_MODEL_IDS.includes(id)) {
+      localStorage.setItem(OPENAI_MODEL_STORAGE_KEY, id);
+    }
+  }
+
   async function postAdminAi(payload: Record<string, unknown>) {
     const res = await fetch("/api/admin/ai", {
       method: "POST",
@@ -148,7 +167,7 @@ export default function AdminPage() {
         "Content-Type": "application/json",
         "x-admin-password": storedPw() ?? "",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, model: openAiModel }),
     });
     const j = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "AI request failed");
@@ -642,27 +661,46 @@ export default function AdminPage() {
                       : "Publish markdown to your blog. Slug is generated from the title until you edit it."}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAiError("");
-                      setShowPromptGenerator((v) => !v);
-                    }}
-                    className={btnGhost}
-                  >
-                    <Sparkles className="h-4 w-4" aria-hidden />
-                    Prompt generator
-                  </button>
-                  <button
-                    type="button"
-                    disabled={aiBusy !== null}
-                    onClick={() => void handleAutofillEmpty()}
-                    className={btnGhost}
-                  >
-                    <Sparkles className="h-4 w-4" aria-hidden />
-                    {aiBusy === "autofill" ? "Filling…" : "Auto-fill empty fields"}
-                  </button>
+                <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:max-w-xs">
+                  <div>
+                    <label htmlFor="admin-openai-model" className={`mb-1.5 block ${t.label}`}>
+                      Model
+                    </label>
+                    <select
+                      id="admin-openai-model"
+                      value={openAiModel}
+                      onChange={(e) => persistOpenAiModel(e.target.value)}
+                      className={`${inputClass} cursor-pointer py-2.5`}
+                    >
+                      {OPENAI_CHAT_MODELS.map((m) => (
+                        <option key={m.id} value={m.id} className="bg-zinc-900 text-white">
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAiError("");
+                        setShowPromptGenerator((v) => !v);
+                      }}
+                      className={btnGhost}
+                    >
+                      <Sparkles className="h-4 w-4" aria-hidden />
+                      Prompt generator
+                    </button>
+                    <button
+                      type="button"
+                      disabled={aiBusy !== null}
+                      onClick={() => void handleAutofillEmpty()}
+                      className={btnGhost}
+                    >
+                      <Sparkles className="h-4 w-4" aria-hidden />
+                      {aiBusy === "autofill" ? "Filling…" : "Auto-fill empty fields"}
+                    </button>
+                  </div>
                 </div>
               </header>
 
