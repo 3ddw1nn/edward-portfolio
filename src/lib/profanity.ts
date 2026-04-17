@@ -5,7 +5,7 @@
 
 /** Shown when a comment (name/body/reply) fails the filter — server and client use the same copy. */
 export const PROFANITY_COMMENT_WARNING =
-  "Don't be a fucking cunt. I use this to get jobs asshole. Thanks";
+  "Using bad language is not allowed. Don't be a fucking cunt. I use this to get jobs asshole. Thanks";
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -244,6 +244,7 @@ export function isProfane(text: string): boolean {
   return false;
 }
 
+/** Joins optional display name, comment body, and reply @handle for profanity scanning (all share the same filter). */
 export function combinedCommentText(parts: {
   name?: string | null;
   body?: string | null;

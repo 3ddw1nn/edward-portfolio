@@ -179,28 +179,32 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   }
 
   async function submit() {
-    if (submitting || (!body.trim() && !selectedGif)) return;
-    setSubmitting(true);
+    if (submitting) return;
     setErrorMsg("");
 
+    const nameTrim = name.trim();
+    const bodyTrim = body.trim();
     const profanitySource = combinedCommentText({
-      name: name.trim() || null,
-      body: body.trim() || null,
+      name: nameTrim || null,
+      body: bodyTrim || null,
       reply_to_name: replyTarget?.name ?? null,
     });
     if (profanitySource.trim() && isProfane(profanitySource)) {
       setErrorMsg(PROFANITY_COMMENT_WARNING);
-      setSubmitting(false);
       return;
     }
+
+    if (!bodyTrim && !selectedGif) return;
+
+    setSubmitting(true);
 
     const res = await fetch("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         post_slug: postSlug,
-        name: name.trim() || null,
-        body: body.trim(),
+        name: nameTrim || null,
+        body: bodyTrim,
         gif_url: selectedGif?.url ?? null,
         reply_to_id: replyTarget?.id ?? null,
         reply_to_name: replyTarget?.name ?? null,

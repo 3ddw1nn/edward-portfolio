@@ -113,6 +113,19 @@ export async function POST(req: NextRequest) {
 
   const { post_slug, name, body: text, gif_url, reply_to_id, reply_to_name } = body;
 
+  const safeReplyToId = reply_to_id?.trim() || null;
+  const safeReplyToName = reply_to_name?.trim() || null;
+
+  // Display name, message, and reply handle — same filter + warning everywhere.
+  const profanityCheck = combinedCommentText({
+    name,
+    body: text,
+    reply_to_name: safeReplyToName,
+  });
+  if (profanityCheck.trim() && isProfane(profanityCheck)) {
+    return NextResponse.json({ error: PROFANITY_COMMENT_WARNING }, { status: 400 });
+  }
+
   if (!post_slug || (!text?.trim() && !gif_url)) {
     return NextResponse.json(
       { error: "post_slug and either body or gif_url are required" },
@@ -125,18 +138,6 @@ export async function POST(req: NextRequest) {
       { error: "Comment too long (max 2000 characters)" },
       { status: 400 }
     );
-  }
-
-  const safeReplyToId = reply_to_id?.trim() || null;
-  const safeReplyToName = reply_to_name?.trim() || null;
-
-  const profanityCheck = combinedCommentText({
-    name,
-    body: text,
-    reply_to_name: safeReplyToName,
-  });
-  if (profanityCheck.trim() && isProfane(profanityCheck)) {
-    return NextResponse.json({ error: PROFANITY_COMMENT_WARNING }, { status: 400 });
   }
 
   // Use admin client to bypass RLS when inserting
