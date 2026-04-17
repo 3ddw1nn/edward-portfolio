@@ -332,6 +332,7 @@ export default function AdminPage() {
     };
 
     if (res.status === 401) {
+      setPostStatus("idle");
       signOut();
       setAuthError("Wrong password. Try again.");
       return;
@@ -344,24 +345,22 @@ export default function AdminPage() {
     }
 
     const wasEditing = editingSlug !== null;
-    const nextDate = json.post?.date ?? new Date().toISOString().slice(0, 10);
     const nextSlug = json.post?.slug ?? viewSlug;
 
     setSuccessLinkSlug(nextSlug);
     setLastSaveWasEdit(wasEditing);
     setPostStatus("success");
     setEditingSlug(null);
-    if (wasEditing) {
-      setDate(nextDate);
-    } else {
-      setTitle("");
-      setSlug("");
-      setExcerpt("");
-      setTags("");
-      setReadTime("5 min read");
-      setContent("");
-      setDate(new Date().toISOString().slice(0, 10));
-    }
+    setPostError("");
+    // Blank “new post” form after any successful save (create or edit).
+    setTitle("");
+    setSlug("");
+    setExcerpt("");
+    setTags("");
+    setReadTime("5 min read");
+    setContent("");
+    setDate(new Date().toISOString().slice(0, 10));
+    setTab("new");
   }
 
   // ── Auth gate ─────────────────────────────────────────────────────────────
