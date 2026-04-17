@@ -12,7 +12,9 @@ import {
   MessageSquareText,
   Newspaper,
   Pencil,
+  Sparkles,
   Trash2,
+  Wand2,
 } from "lucide-react";
 
 const STORAGE_KEY = "admin_pw";
@@ -83,6 +85,13 @@ export default function AdminPage() {
   const [content, setContent] = useState("");
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  /** When AI sets both title+slug, skip one slugify(title) pass so the model slug is kept */
+  const skipSlugifyRef = useRef(false);
+
+  const [showPromptGenerator, setShowPromptGenerator] = useState(false);
+  const [generatorPrompt, setGeneratorPrompt] = useState("");
+  const [aiBusy, setAiBusy] = useState<null | "autofill" | "prompt" | "polish">(null);
+  const [aiError, setAiError] = useState("");
   const [imageUploadState, setImageUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [imageUploadError, setImageUploadError] = useState("");
   const [postStatus, setPostStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
@@ -107,6 +116,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (editingSlug) return;
+    if (skipSlugifyRef.current) {
+      skipSlugifyRef.current = false;
+      return;
+    }
     setSlug(slugify(title));
   }, [title, editingSlug]);
 
@@ -126,6 +139,142 @@ export default function AdminPage() {
     localStorage.removeItem(STORAGE_KEY);
     setAuthed(false);
     setPw("");
+  }
+
+  async function postAdminAi(payload: Record<string, unknown>) {
+    const res = await fetch("/api/admin/ai", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": storedPw() ?? "",
+      },
+      body: JSON.stringify(payload),
+    });
+    const j = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "AI request failed");
+    return j;
+  }
+
+  async function handleAutofillEmpty() {
+    setAiError("");
+    const fillKeys: string[] = [];
+    if (!title.trim()) fillKeys.push("title");
+    if (!editingSlug && !slug.trim()) fillKeys.push("slug");
+    if (!excerpt.trim()) fillKeys.push("excerpt");
+    if (!tags.trim()) fillKeys.push("tags");
+    if (!readTime.trim()) fillKeys.push("read_time");
+    if (!date.trim()) fillKeys.push("date");
+    if (fillKeys.length === 0) {
+      setAiError("All metadata fields are already filled.");
+      return;
+    }
+    setAiBusy("autofill");
+    try {
+      const context = {
+        title,
+        slug,
+        excerpt,
+        tags,
+        read_time: readTime,
+        date,
+        contentPreview: content.slice(0, 2000),
+      };
+      const data = (await postAdminAi({
+        action: "autofillEmpty",
+        fillKeys,
+        context,
+      })) as { fields?: Record<string, unknown> };
+      const fields = data.fields ?? {};
+      const wantTitle = fillKeys.includes("title") && typeof fields.title === "string" && fields.title.trim();
+      const wantSlug =
+        fillKeys.includes("slug") && typeof fields.slug === "string" && fields.slug.trim() && !editingSlug;
+      if (wantTitle && wantSlug) skipSlugifyRef.current = true;
+      if (wantTitle) setTitle(String(fields.title).trim());
+      if (wantSlug) setSlug(String(fields.slug).trim().toLowerCase().replace(/[^\w-]+/g, "-").replace(/^-|-$/g, ""));
+      if (fillKeys.includes("excerpt") && typeof fields.excerpt === "string" && fields.excerpt.trim()) {
+        setExcerpt(fields.excerpt.trim());
+      }
+      if (fillKeys.includes("tags") && Array.isArray(fields.tags)) {
+        const arr = fields.tags.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean);
+        if (arr.length) setTags(arr.join(", "));
+      }
+      if (fillKeys.includes("read_time") && typeof fields.read_time === "string" && fields.read_time.trim()) {
+        setReadTime(fields.read_time.trim());
+      }
+      if (fillKeys.includes("date") && typeof fields.date === "string" && fields.date.trim()) {
+        setDate(fields.date.trim().slice(0, 10));
+      }
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Auto-fill failed");
+    } finally {
+      setAiBusy(null);
+    }
+  }
+
+  async function handleFromPromptGenerate() {
+    setAiError("");
+    const p = generatorPrompt.trim();
+    if (!p) {
+      setAiError("Enter a prompt first.");
+      return;
+    }
+    setAiBusy("prompt");
+    try {
+      const data = (await postAdminAi({
+        action: "fromPrompt",
+        prompt: p,
+      })) as {
+        title?: string;
+        slug?: string;
+        excerpt?: string;
+        tags?: string[];
+        read_time?: string;
+        date?: string;
+        content?: string;
+      };
+      if (!editingSlug) {
+        if (data.title && data.slug) skipSlugifyRef.current = true;
+        if (typeof data.title === "string") setTitle(data.title);
+        if (typeof data.slug === "string") {
+          setSlug(data.slug.trim().toLowerCase().replace(/[^\w-]+/g, "-").replace(/^-|-$/g, ""));
+        }
+        if (typeof data.date === "string") setDate(data.date.slice(0, 10));
+      } else if (typeof data.title === "string") {
+        setTitle(data.title);
+      }
+      if (typeof data.excerpt === "string") setExcerpt(data.excerpt);
+      if (Array.isArray(data.tags)) {
+        setTags(data.tags.filter((x) => typeof x === "string").map((x) => x.trim()).filter(Boolean).join(", "));
+      }
+      if (typeof data.read_time === "string") setReadTime(data.read_time);
+      if (typeof data.content === "string") setContent(data.content);
+      setShowPromptGenerator(false);
+      setGeneratorPrompt("");
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Generation failed");
+    } finally {
+      setAiBusy(null);
+    }
+  }
+
+  async function handlePolishContent() {
+    setAiError("");
+    if (!content.trim()) {
+      setAiError("Add some markdown first, then polish.");
+      return;
+    }
+    setAiBusy("polish");
+    try {
+      const data = (await postAdminAi({
+        action: "improveContent",
+        content,
+      })) as { content?: string };
+      if (typeof data.content === "string") setContent(data.content);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Polish failed");
+    } finally {
+      setAiBusy(null);
+    }
   }
 
   useEffect(() => {
@@ -484,14 +633,75 @@ export default function AdminPage() {
         <div className="mx-auto max-w-3xl lg:max-w-4xl">
           {tab === "new" && (
             <div className={`${card} p-6 sm:p-8 lg:p-10`}>
-              <header className="mb-8 border-b border-white/[0.08] pb-6">
-                <h2 className={`${t.title} text-xl sm:text-2xl`}>{editingSlug ? "Edit post" : "New post"}</h2>
-                <p className={`${t.meta} mt-2 max-w-xl`}>
-                  {editingSlug
-                    ? "Changes go live after save. The post date on the blog index updates to today."
-                    : "Publish markdown to your blog. Slug is generated from the title until you edit it."}
-                </p>
+              <header className="mb-8 flex flex-col gap-4 border-b border-white/[0.08] pb-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <h2 className={`${t.title} text-xl sm:text-2xl`}>{editingSlug ? "Edit post" : "New post"}</h2>
+                  <p className={`${t.meta} mt-2 max-w-xl`}>
+                    {editingSlug
+                      ? "Changes go live after save. The post date on the blog index updates to today."
+                      : "Publish markdown to your blog. Slug is generated from the title until you edit it."}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiError("");
+                      setShowPromptGenerator((v) => !v);
+                    }}
+                    className={btnGhost}
+                  >
+                    <Sparkles className="h-4 w-4" aria-hidden />
+                    Prompt generator
+                  </button>
+                  <button
+                    type="button"
+                    disabled={aiBusy !== null}
+                    onClick={() => void handleAutofillEmpty()}
+                    className={btnGhost}
+                  >
+                    <Sparkles className="h-4 w-4" aria-hidden />
+                    {aiBusy === "autofill" ? "Filling…" : "Auto-fill empty fields"}
+                  </button>
+                </div>
               </header>
+
+              {showPromptGenerator && (
+                <div className="mb-6 space-y-3 rounded-xl border border-violet-400/25 bg-violet-950/20 p-4 sm:p-5">
+                  <p className={`${t.label}`}>Describe the post you want</p>
+                  <textarea
+                    value={generatorPrompt}
+                    onChange={(e) => setGeneratorPrompt(e.target.value)}
+                    rows={5}
+                    className={`${inputClass} min-h-[120px] resize-y py-3`}
+                    placeholder="e.g. A post about how we built our recommendation engine with embeddings…"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={aiBusy !== null}
+                      onClick={() => void handleFromPromptGenerate()}
+                      className={btnPrimary}
+                    >
+                      {aiBusy === "prompt" ? "Generating…" : "Generate draft"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowPromptGenerator(false);
+                        setAiError("");
+                      }}
+                      className={btnGhost}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <p className={`${t.meta} text-sm`}>
+                    Fills title, slug, excerpt, tags, read time, date, and markdown body. Images are never added by
+                    AI — use Upload & insert after.
+                  </p>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {editingSlug && (
@@ -518,6 +728,11 @@ export default function AdminPage() {
                 {postStatus === "error" && (
                   <div className="rounded-xl border border-red-500/40 bg-red-950/35 px-4 py-4">
                     <p className={`${t.body} text-red-100`}>{postError}</p>
+                  </div>
+                )}
+                {aiError && (
+                  <div className="rounded-xl border border-amber-400/35 bg-amber-950/25 px-4 py-3">
+                    <p className={`${t.body} text-amber-100`}>{aiError}</p>
                   </div>
                 )}
 
@@ -609,7 +824,21 @@ export default function AdminPage() {
                   )}
                 </div>
 
-                <Field label="Content (markdown) *">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="block text-xs font-semibold uppercase tracking-widest text-white sm:text-sm">
+                      Content (markdown) *
+                    </label>
+                    <button
+                      type="button"
+                      disabled={aiBusy !== null}
+                      onClick={() => void handlePolishContent()}
+                      className={`${btnGhost} shrink-0 text-sm`}
+                    >
+                      <Wand2 className="h-4 w-4" aria-hidden />
+                      {aiBusy === "polish" ? "Polishing…" : "Polish content"}
+                    </button>
+                  </div>
                   <textarea
                     ref={contentRef}
                     value={content}
@@ -619,7 +848,10 @@ export default function AdminPage() {
                     className={`${inputClass} min-h-[320px] resize-y font-mono text-[13px] leading-relaxed sm:text-sm`}
                     placeholder="Write your post…"
                   />
-                </Field>
+                  <p className={`${t.meta} text-sm`}>
+                    Polish rewrites your markdown for clarity. It will not add images — upload those yourself.
+                  </p>
+                </div>
 
                 <div className="flex flex-wrap gap-3 pt-2">
                   <button type="submit" disabled={postStatus === "saving"} className={btnPrimary}>
