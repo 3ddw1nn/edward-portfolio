@@ -160,36 +160,29 @@ export function GifPicker({
       <div
         ref={containerRef}
         className={[
-          // ── Mobile: fixed full-width bottom sheet, safe from keyboard ──
-          "fixed inset-x-2 flex flex-col",
-          // Fallback bottom + height in case visualViewport isn't available.
-          "bottom-[max(0.5rem,env(safe-area-inset-bottom))] max-h-[min(55vh,24rem)]",
+          // ── Mobile: edge-to-edge sheet filling everything above the keyboard ──
+          "fixed inset-x-0 top-[env(safe-area-inset-top)] flex flex-col",
+          // Fallback if visualViewport isn't available.
+          "bottom-[env(safe-area-inset-bottom)]",
           // ── Desktop (sm+): restore the original anchored dropdown ──
-          "sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:mb-2",
-          "sm:w-[460px] sm:max-w-[calc(100vw-2rem)] sm:max-h-none",
-          // ── Chrome ──
-          "bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl z-50 overflow-hidden",
+          "sm:absolute sm:inset-x-auto sm:top-auto sm:bottom-full sm:right-0 sm:mb-2",
+          "sm:w-[460px] sm:max-w-[calc(100vw-2rem)] sm:max-h-none sm:rounded-lg",
+          // ── Chrome — flush edges on mobile, rounded on desktop ──
+          "bg-[#2b2d31] border border-[#1e1f22] shadow-2xl z-50 overflow-hidden",
         ].join(" ")}
         style={{
           boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-          // Mobile only: lift the sheet above the soft keyboard and cap its
-          // height to ~55% of the actually-visible viewport (capped at 22rem).
+          // Mobile only: anchor bottom edge just above the soft keyboard so
+          // the sheet fills the entire visible area from the top of the
+          // device down to the keyboard.
           ...(isMobile && vv
-            ? {
-                bottom: `calc(${vv.bottomInset}px + max(0.5rem, env(safe-area-inset-bottom)))`,
-                maxHeight: `${Math.min(vv.h * 0.55, 352)}px`,
-              }
+            ? { bottom: `${vv.bottomInset}px` }
             : {}),
         }}
         role="dialog"
         aria-modal="true"
         aria-label="GIF picker"
       >
-        {/* Drag handle (mobile affordance only) */}
-        <div className="sm:hidden flex justify-center pt-2 pb-1">
-          <div className="h-1 w-10 rounded-full bg-white/20" />
-        </div>
-
         {/* Tabs */}
         <div className="flex items-center border-b border-[#1e1f22] shrink-0">
           {(["GIFs", "Stickers"] as Tab[]).map((t) => (
