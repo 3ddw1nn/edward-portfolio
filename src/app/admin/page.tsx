@@ -1,13 +1,13 @@
 "use client";
 
 import { Suspense, useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { AdminEditFromUrl } from "./AdminEditFromUrl";
 import {
   ExternalLink,
   FilePenLine,
   ImagePlus,
-  LayoutDashboard,
   LogOut,
   MessageSquareText,
   Newspaper,
@@ -26,7 +26,6 @@ const t = {
   title: "text-base sm:text-lg font-semibold text-white tracking-tight",
   /** Sidebar item label: no text-* so active pill inherits `text-black` from the button */
   navLabel: "text-xs sm:text-sm font-medium tracking-wide",
-  caption: "text-xs text-white",
 };
 
 const card =
@@ -55,6 +54,7 @@ type Post = {
   title: string;
   date: string;
   excerpt: string;
+  tags: string[];
   source: "mdx" | "supabase";
 };
 
@@ -144,7 +144,12 @@ export default function AdminPage() {
           error?: string;
         };
         if (!r.ok) throw new Error(j.error ?? "Failed to load posts");
-        setPosts(j.posts ?? []);
+        setPosts(
+          (j.posts ?? []).map((p) => ({
+            ...p,
+            tags: Array.isArray(p.tags) ? p.tags : [],
+          }))
+        );
         setSupabasePostsWarning(j.supabaseError ?? null);
         setHiddenDupCount(
           typeof j.hiddenDbDuplicateCount === "number" ? j.hiddenDbDuplicateCount : 0
@@ -387,41 +392,48 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4 py-16">
-        <div className={`w-full max-w-md ${card} p-8 sm:p-10`}>
-          <div className="mb-8 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-black">
-              <LayoutDashboard className="h-6 w-6" aria-hidden />
-            </div>
-            <div>
-              <h1 className={t.title}>Admin</h1>
-              <p className={`${t.meta} mt-1`}>Sign in to manage posts and comments.</p>
-            </div>
+      <div className="flex min-h-[calc(100vh-6rem)] items-center justify-center px-4 pb-16 pt-4">
+        <div className={`w-full max-w-md overflow-hidden ${card} p-0`}>
+          <div className="relative aspect-[16/10] w-full overflow-hidden border-b border-white/[0.1]">
+            <Image
+              src="/images/Guts.png"
+              alt=""
+              fill
+              className="object-cover object-[center_20%]"
+              sizes="(max-width: 448px) 100vw, 448px"
+              priority
+            />
           </div>
-          <form onSubmit={handleAuth} className="space-y-5">
+          <div className="space-y-6 p-8 sm:p-10">
             <div>
-              <label htmlFor="admin-pw" className={`mb-2 block ${t.label}`}>
-                Password
-              </label>
-              <input
-                id="admin-pw"
-                type="password"
-                value={pw}
-                onChange={(e) => setPw(e.target.value)}
-                className={inputClass}
-                placeholder="Enter password"
-                autoFocus
-              />
+              <h1 className={`${t.title} text-2xl`}>Admin</h1>
+              <p className={`${t.meta} mt-2`}>Sign in to manage posts and comments.</p>
             </div>
-            {authError && (
-              <p className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
-                {authError}
-              </p>
-            )}
-            <button type="submit" className={`${btnPrimary} w-full`}>
-              Continue
-            </button>
-          </form>
+            <form onSubmit={handleAuth} className="space-y-5">
+              <div>
+                <label htmlFor="admin-pw" className={`mb-2 block ${t.label}`}>
+                  Password
+                </label>
+                <input
+                  id="admin-pw"
+                  type="password"
+                  value={pw}
+                  onChange={(e) => setPw(e.target.value)}
+                  className={inputClass}
+                  placeholder="Enter password"
+                  autoFocus
+                />
+              </div>
+              {authError && (
+                <p className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+                  {authError}
+                </p>
+              )}
+              <button type="submit" className={`${btnPrimary} w-full`}>
+                Continue
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -433,17 +445,7 @@ export default function AdminPage() {
         <AdminEditFromUrl authed={authed} loadPostForEdit={loadPostForEdit} />
       </Suspense>
 
-      <aside className="shrink-0 border-b border-white/[0.1] bg-zinc-950/80 px-4 py-5 lg:w-64 lg:border-b-0 lg:border-r lg:px-5 lg:py-8">
-        <div className="mb-6 flex items-center gap-3 lg:mb-10">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-black">
-            <LayoutDashboard className="h-5 w-5" aria-hidden />
-          </div>
-          <div>
-            <p className={`${t.caption} font-semibold uppercase tracking-widest`}>Dashboard</p>
-            <p className={`${t.title} text-lg`}>Content</p>
-          </div>
-        </div>
-
+      <aside className="shrink-0 border-b border-white/[0.1] bg-zinc-950/80 px-4 py-5 lg:w-56 lg:border-b-0 lg:border-r lg:px-4 lg:py-8">
         <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-2">
           <button type="button" onClick={() => setTab("new")} className={btnNav(tab === "new")}>
             <FilePenLine className="h-4 w-4 shrink-0" aria-hidden />
@@ -459,35 +461,26 @@ export default function AdminPage() {
           </button>
         </nav>
 
-        <div className="mt-8 hidden flex-col gap-2 border-t border-white/[0.08] pt-8 lg:flex">
-          <Link
-            href="/blog"
-            className={`${btnGhost} justify-start border-white/[0.1] bg-transparent text-sm`}
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden />
-            View blog
-          </Link>
+        <div className="mt-8 hidden border-t border-white/[0.08] pt-8 lg:block">
           <button
             type="button"
             onClick={signOut}
-            className={`${btnGhost} justify-start border-white/[0.1] bg-transparent text-sm hover:border-red-400/40 hover:text-red-200`}
+            className={`${btnGhost} w-full justify-start border-white/[0.1] bg-transparent text-sm hover:border-red-400/40 hover:text-red-200`}
           >
             <LogOut className="h-4 w-4" aria-hidden />
             Sign out
           </button>
         </div>
 
-        <div className="mt-6 flex gap-2 lg:hidden">
-          <Link href="/blog" className={`${btnGhost} flex-1 text-sm`}>
-            Blog
-          </Link>
-          <button type="button" onClick={signOut} className={`${btnGhost} flex-1 text-sm`}>
-            Out
+        <div className="mt-6 lg:hidden">
+          <button type="button" onClick={signOut} className={`${btnGhost} w-full text-sm`}>
+            <LogOut className="h-4 w-4" aria-hidden />
+            Sign out
           </button>
         </div>
       </aside>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-12">
+      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-10 pt-6 sm:px-6 sm:pb-12 sm:pt-8 lg:px-10 lg:pb-14 lg:pt-10">
         <div className="mx-auto max-w-3xl lg:max-w-4xl">
           {tab === "new" && (
             <div className={`${card} p-6 sm:p-8 lg:p-10`}>
@@ -683,9 +676,20 @@ export default function AdminPage() {
                       className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0 flex-1">
-                        <span className="inline-flex rounded-lg border border-white/[0.15] bg-white/[0.06] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                          {post.source === "mdx" ? "MDX file" : "Database"}
-                        </span>
+                        {post.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {post.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex rounded-full border border-white/[0.18] bg-white/[0.06] px-3 py-1 text-xs font-medium text-white"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className={`${t.meta} text-sm`}>No tags</p>
+                        )}
                         <p className={`${t.title} mt-3 line-clamp-2`}>{post.title}</p>
                         <p className={`${t.meta} mt-2 font-mono text-xs sm:text-sm`}>
                           {post.slug} · {post.date}

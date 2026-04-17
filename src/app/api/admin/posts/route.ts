@@ -10,14 +10,26 @@ export type AdminPostRow = {
   title: string;
   date: string;
   excerpt: string;
+  tags: string[];
   source: "mdx" | "supabase";
 };
 
-type MdxManifestEntry = { slug: string; title: string; date: string; excerpt: string };
+type MdxManifestEntry = {
+  slug: string;
+  title: string;
+  date: string;
+  excerpt: string;
+  tags?: string[];
+};
+
+function normalizeTags(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((t): t is string => typeof t === "string" && t.trim().length > 0);
+}
 
 function mergeAdminPosts(
   mdxPosts: MdxManifestEntry[],
-  dbRows: { id: string; slug: string; title: string; date: string; excerpt: string }[]
+  dbRows: { id: string; slug: string; title: string; date: string; excerpt: string; tags?: unknown }[]
 ): { posts: AdminPostRow[]; hiddenDbDuplicateCount: number } {
   const mdxSlugs = new Set(mdxPosts.map((p) => p.slug));
   const dbBySlug = new Map(dbRows.map((r) => [r.slug, r]));
@@ -28,6 +40,7 @@ function mergeAdminPosts(
     title: r.title,
     date: r.date,
     excerpt: r.excerpt,
+    tags: normalizeTags(r.tags),
     source: "supabase" as const,
   }));
 
@@ -39,6 +52,7 @@ function mergeAdminPosts(
       title: p.title,
       date: p.date,
       excerpt: p.excerpt,
+      tags: normalizeTags(p.tags),
       source: "mdx" as const,
     }));
 
@@ -57,7 +71,7 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("posts")
-    .select("id, slug, title, date, excerpt")
+    .select("id, slug, title, date, excerpt, tags")
     .order("date", { ascending: false });
 
   if (error) {

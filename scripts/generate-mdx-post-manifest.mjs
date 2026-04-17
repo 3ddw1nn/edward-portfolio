@@ -29,11 +29,16 @@ function main() {
     const slug = filename.replace(/\.mdx$/, "");
     const raw = fs.readFileSync(path.join(POSTS_DIR, filename), "utf-8");
     const { data } = matter(raw);
+    const rawTags = data.tags;
+    const tags = Array.isArray(rawTags)
+      ? rawTags.filter((t) => typeof t === "string" && t.trim())
+      : [];
     return {
       slug,
       title: data.title ?? "",
       date: data.date ?? "",
       excerpt: data.excerpt ?? "",
+      tags,
     };
   });
 
