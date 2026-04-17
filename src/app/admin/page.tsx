@@ -611,7 +611,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => loadPostForEdit(post.slug)}
-                          className="font-brutal text-[9px] tracking-[0.2em] uppercase text-white/30 hover:text-white transition-colors inline-flex items-center gap-1"
+                          className="font-brutal text-[9px] tracking-[0.2em] uppercase text-zinc-200 hover:text-white transition-colors inline-flex items-center gap-1.5 rounded border border-white/25 bg-white/[0.06] px-2.5 py-1.5 hover:border-white/40"
                           title="Edit in admin"
                         >
                           <Pencil className="h-3 w-3" />
@@ -620,7 +620,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => deletePost(post)}
-                          className="text-white/20 hover:text-red-400 transition-colors"
+                          className="rounded border border-white/15 bg-transparent p-1.5 text-zinc-400 hover:border-red-400/40 hover:text-red-400 transition-colors"
                           title="Delete post from database"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

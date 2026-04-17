@@ -2,12 +2,11 @@ import type { ImgHTMLAttributes } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, MessageCircle } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllPosts, getPostBySlug, getMdxSlugs } from "@/lib/blog";
+import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
-import { DeletePostButton } from "@/components/blog/DeletePostButton";
-import { EditPostButton } from "@/components/blog/EditPostButton";
+import { BlogPostAdminToolbar } from "@/components/blog/BlogPostAdminToolbar";
 import { PostLikeButton } from "@/components/blog/PostLikeButton";
 
 export async function generateStaticParams() {
@@ -47,7 +46,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   const engagement = await getSinglePostEngagement(slug, null);
-  const isMdxBacked = getMdxSlugs().includes(slug);
 
   return (
     <div className="w-full min-h-screen bg-black text-white">
@@ -65,10 +63,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform duration-200" />
               All posts
             </Link>
-            <div className="flex items-center gap-4 shrink-0">
-              <EditPostButton slug={slug} canEditFromDb={!isMdxBacked} />
-              <DeletePostButton slug={slug} canDeleteFromDb={!isMdxBacked} />
-            </div>
+            <BlogPostAdminToolbar slug={slug} source={post.source} />
           </div>
 
           {/* Tags */}

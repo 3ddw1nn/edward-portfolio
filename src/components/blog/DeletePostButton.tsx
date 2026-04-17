@@ -9,18 +9,21 @@ const STORAGE_KEY = "admin_pw";
 export function DeletePostButton({
   slug,
   canDeleteFromDb = true,
+  assumeAdmin = false,
 }: {
   slug: string;
   /** File-backed MDX posts cannot be removed from the database UI; delete the .mdx file instead. */
   canDeleteFromDb?: boolean;
+  assumeAdmin?: boolean;
 }) {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(assumeAdmin);
   const [confirming, setConfirming] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    if (assumeAdmin) return;
     setIsAdmin(!!localStorage.getItem(STORAGE_KEY));
-  }, []);
+  }, [assumeAdmin]);
 
   if (!isAdmin || !canDeleteFromDb) return null;
 
@@ -48,7 +51,7 @@ export function DeletePostButton({
       className={`inline-flex items-center gap-2 font-brutal text-[10px] tracking-[0.2em] uppercase transition-colors duration-200 ${
         confirming
           ? "text-red-400 hover:text-red-300"
-          : "text-white/25 hover:text-red-400"
+          : "text-zinc-400 hover:text-red-400"
       }`}
     >
       <Trash2 className="h-3 w-3" />
