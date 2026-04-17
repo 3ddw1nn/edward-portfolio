@@ -13,8 +13,10 @@ export type AdminPostRow = {
   source: "mdx" | "supabase";
 };
 
+type MdxManifestEntry = { slug: string; title: string; date: string; excerpt: string };
+
 function mergeAdminPosts(
-  mdxPosts: typeof mdxManifest.posts,
+  mdxPosts: MdxManifestEntry[],
   dbRows: { id: string; slug: string; title: string; date: string; excerpt: string }[]
 ): { posts: AdminPostRow[]; hiddenDbDuplicateCount: number } {
   const mdxSlugs = new Set(mdxPosts.map((p) => p.slug));
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
     .order("date", { ascending: false });
 
   if (error) {
-    const { posts } = mergeAdminPosts(mdxManifest.posts, []);
+    const { posts } = mergeAdminPosts(mdxManifest.posts as MdxManifestEntry[], []);
     return NextResponse.json({
       posts,
       hiddenDbDuplicateCount: 0,
@@ -67,7 +69,10 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const { posts, hiddenDbDuplicateCount } = mergeAdminPosts(mdxManifest.posts, data ?? []);
+  const { posts, hiddenDbDuplicateCount } = mergeAdminPosts(
+    mdxManifest.posts as MdxManifestEntry[],
+    data ?? []
+  );
 
   return NextResponse.json({
     posts,

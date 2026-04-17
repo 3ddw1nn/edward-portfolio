@@ -22,6 +22,7 @@ export type Post = PostMeta & {
 // ── MDX helpers (sync, file-system) ─────────────────────────────────────────
 
 function getMdxPosts(): PostMeta[] {
+  if (!fs.existsSync(POSTS_DIR)) return [];
   const files = fs.readdirSync(POSTS_DIR).filter((f) => f.endsWith(".mdx"));
   return files.map((filename) => {
     const slug = filename.replace(/\.mdx$/, "");
@@ -112,6 +113,7 @@ export async function getPostBySlug(slug: string): Promise<Post> {
 
 // Static MDX slugs only — Supabase posts render dynamically
 export function getMdxSlugs(): string[] {
+  if (!fs.existsSync(POSTS_DIR)) return [];
   return fs
     .readdirSync(POSTS_DIR)
     .filter((f) => f.endsWith(".mdx"))

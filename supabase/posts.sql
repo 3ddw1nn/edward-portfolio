@@ -1,4 +1,4 @@
--- Blog posts stored in Supabase (optional; MDX files in src/content/blog are merged on the public blog).
+-- Blog posts in Supabase (canonical on the site). Optional src/content/blog/*.mdx files are a fallback when no row exists.
 -- Run in Supabase SQL Editor.
 
 create table if not exists public.posts (

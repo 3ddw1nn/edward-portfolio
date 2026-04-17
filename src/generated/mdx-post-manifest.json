@@ -1,23 +1,4 @@
 {
-  "generatedAt": "2026-04-17T16:08:17.424Z",
-  "posts": [
-    {
-      "slug": "building-muffin-recommendation-engine",
-      "title": "Building a Taste-Based Recommendation Engine with OpenAI",
-      "date": "2025-03-10",
-      "excerpt": "How we moved beyond star ratings and built a flavor-profile matching system for Muffin using embeddings and 800+ taste vectors."
-    },
-    {
-      "slug": "code-and-craft",
-      "title": "Why I Paint and What It Does to My Code",
-      "date": "2024-11-14",
-      "excerpt": "On the surprising overlap between digital illustration and software architecture — and why I think every engineer should have a visual practice."
-    },
-    {
-      "slug": "full-stack-to-mobile-lessons",
-      "title": "5 Things Web Developers Get Wrong About React Native",
-      "date": "2025-01-22",
-      "excerpt": "After two years shipping a production React Native app, here's what I wish I'd known coming from a web background."
-    }
-  ]
+  "generatedAt": "2026-04-17T17:36:51.306Z",
+  "posts": []
 }

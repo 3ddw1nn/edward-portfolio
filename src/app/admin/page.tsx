@@ -570,14 +570,15 @@ export default function AdminPage() {
           )}
           {supabasePostsWarning && (
             <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-amber-400/90 mb-4 leading-relaxed">
-              Database list error: {supabasePostsWarning} — MDX posts below still load from the repo manifest.
+              Database list error: {supabasePostsWarning} — optional MDX files (if any) still show from the manifest.
             </p>
           )}
           {loadingPosts ? (
             <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">Loading...</p>
           ) : posts.length === 0 ? (
             <p className="font-brutal text-[10px] tracking-[0.2em] uppercase text-white/25">
-              No posts found (add MDX under src/content/blog or run supabase/posts.sql and publish from here).
+              No posts found. Run supabase/posts.sql, then publish from New post — or add optional .mdx files under
+              src/content/blog.
             </p>
           ) : (
             <div className="space-y-0">
@@ -628,7 +629,7 @@ export default function AdminPage() {
                     ) : (
                       <span
                         className="font-brutal text-[8px] tracking-[0.15em] uppercase text-white/15 max-w-[7rem] text-right leading-tight"
-                        title="Remove src/content/blog/{slug}.mdx to delete this post"
+                        title="File-only post: delete the .mdx under src/content/blog to remove it"
                       >
                         File-backed
                       </span>
@@ -646,8 +647,8 @@ export default function AdminPage() {
             </p>
           )}
           <p className="font-brutal text-[9px] tracking-[0.15em] uppercase text-white/20 mt-8 leading-relaxed">
-            MDX posts live in src/content/blog (regenerate manifest: pnpm prebuild). Database posts use the admin
-            &quot;New post&quot; form after running supabase/posts.sql.
+            Posts are stored in Supabase (New post). Optional .mdx files in src/content/blog merge into the admin
+            list after <code className="text-white/45">pnpm prebuild</code>.
           </p>
         </div>
       )}
