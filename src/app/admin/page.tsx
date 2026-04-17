@@ -176,6 +176,10 @@ export default function AdminPage() {
 
   async function handleAutofillEmpty() {
     setAiError("");
+    if (!content.trim()) {
+      setAiError("Write something in the Content field first — auto-fill uses it for context.");
+      return;
+    }
     const fillKeys: string[] = [];
     if (!title.trim()) fillKeys.push("title");
     if (!editingSlug && !slug.trim()) fillKeys.push("slug");
@@ -661,7 +665,7 @@ export default function AdminPage() {
                       : "Publish markdown to your blog. Slug is generated from the title until you edit it."}
                   </p>
                 </div>
-                <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:max-w-xs">
+                <div className="flex w-full min-w-0 flex-col gap-3 sm:ml-auto sm:w-full sm:max-w-md">
                   <div>
                     <label htmlFor="admin-openai-model" className={`mb-1.5 block ${t.label}`}>
                       Model
@@ -679,26 +683,27 @@ export default function AdminPage() {
                       ))}
                     </select>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         setAiError("");
                         setShowPromptGenerator((v) => !v);
                       }}
-                      className={btnGhost}
+                      className={`${btnGhost} min-w-0 justify-center px-2 py-2.5 text-center text-xs leading-tight sm:px-3 sm:text-sm`}
                     >
-                      <Sparkles className="h-4 w-4" aria-hidden />
-                      Prompt generator
+                      <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="min-w-0">Prompt generator</span>
                     </button>
                     <button
                       type="button"
-                      disabled={aiBusy !== null}
+                      disabled={aiBusy !== null || !content.trim()}
                       onClick={() => void handleAutofillEmpty()}
-                      className={btnGhost}
+                      title={!content.trim() ? "Write something in Content first — AI uses it for tone" : undefined}
+                      className={`${btnGhost} min-w-0 justify-center px-2 py-2.5 text-center text-xs leading-tight sm:px-3 sm:text-sm disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-zinc-900/60 disabled:text-zinc-500`}
                     >
-                      <Sparkles className="h-4 w-4" aria-hidden />
-                      {aiBusy === "autofill" ? "Filling…" : "Auto-fill empty fields"}
+                      <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="min-w-0">{aiBusy === "autofill" ? "Filling…" : "Auto-fill empty"}</span>
                     </button>
                   </div>
                 </div>
@@ -869,9 +874,10 @@ export default function AdminPage() {
                     </label>
                     <button
                       type="button"
-                      disabled={aiBusy !== null}
+                      disabled={aiBusy !== null || !content.trim()}
                       onClick={() => void handlePolishContent()}
-                      className={`${btnGhost} shrink-0 text-sm`}
+                      title={!content.trim() ? "Add markdown in Content first" : undefined}
+                      className={`${btnGhost} shrink-0 text-sm disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-zinc-900/60 disabled:text-zinc-500`}
                     >
                       <Wand2 className="h-4 w-4" aria-hidden />
                       {aiBusy === "polish" ? "Polishing…" : "Polish content"}
@@ -887,7 +893,8 @@ export default function AdminPage() {
                     placeholder="Write your post…"
                   />
                   <p className={`${t.meta} text-sm`}>
-                    Polish rewrites your markdown for clarity. It will not add images — upload those yourself.
+                    Auto-fill and Polish need text in Content first. Polish rewrites your markdown for clarity and
+                    never adds images — upload those yourself.
                   </p>
                 </div>
 
