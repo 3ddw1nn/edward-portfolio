@@ -3,6 +3,42 @@ import { createAdminClient } from "@/lib/supabase";
 
 export const runtime = "edge";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function withCommentLikeDefaults<T extends Record<string, unknown>>(c: T) {
+  return { ...c, like_count: 0, liked: false };
+}
+
+async function attachCommentLikes(
+  admin: ReturnType<typeof createAdminClient>,
+  comments: Record<string, unknown>[],
+  visitorId: string | null
+) {
+  if (comments.length === 0) return [];
+
+  const ids = comments.map((c) => c.id as string);
+  const [{ data: likeRows }, { data: mineRows }] = await Promise.all([
+    admin.from("comment_likes").select("comment_id").in("comment_id", ids),
+    visitorId && UUID_RE.test(visitorId)
+      ? admin.from("comment_likes").select("comment_id").eq("visitor_id", visitorId).in("comment_id", ids)
+      : Promise.resolve({ data: null as { comment_id: string }[] | null }),
+  ]);
+
+  const counts: Record<string, number> = {};
+  for (const row of likeRows ?? []) {
+    const id = row.comment_id as string;
+    if (id) counts[id] = (counts[id] ?? 0) + 1;
+  }
+  const likedSet = new Set((mineRows ?? []).map((r) => r.comment_id as string));
+
+  return comments.map((c) => ({
+    ...c,
+    like_count: counts[c.id as string] ?? 0,
+    liked: likedSet.has(c.id as string),
+  }));
+}
+
 function isMissingOptionalColumns(message?: string | null) {
   const text = (message ?? "").toLowerCase();
   return (
@@ -12,12 +48,15 @@ function isMissingOptionalColumns(message?: string | null) {
   );
 }
 
-// GET /api/comments?slug=some-post
+// GET /api/comments?slug=some-post&visitor_id=<uuid optional>
 export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
   if (!slug) {
     return NextResponse.json({ error: "slug is required" }, { status: 400 });
   }
+
+  const visitorRaw = req.nextUrl.searchParams.get("visitor_id");
+  const visitorId = visitorRaw && UUID_RE.test(visitorRaw) ? visitorRaw : null;
 
   const admin = createAdminClient();
   const { data, error } = await admin
@@ -37,12 +76,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: fallback.error.message }, { status: 500 });
     }
 
-    const comments = (fallback.data ?? []).map((comment) => ({
+    const raw = (fallback.data ?? []).map((comment) => ({
       ...comment,
       gif_url: null,
       reply_to_id: null,
       reply_to_name: null,
     }));
+    const comments = await attachCommentLikes(admin, raw, visitorId);
     return NextResponse.json({ comments });
   }
 
@@ -50,7 +90,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ comments: data ?? [] });
+  const comments = await attachCommentLikes(admin, data ?? [], visitorId);
+  return NextResponse.json({ comments });
 }
 
 // POST /api/comments
@@ -120,12 +161,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        comment: {
+        comment: withCommentLikeDefaults({
           ...fallback.data,
           gif_url: null,
           reply_to_id: null,
           reply_to_name: null,
-        },
+        }),
       },
       { status: 201 }
     );
@@ -135,7 +176,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ comment: data }, { status: 201 });
+  return NextResponse.json({ comment: withCommentLikeDefaults(data) }, { status: 201 });
 }
 
 // DELETE /api/comments?id=uuid (admin only)

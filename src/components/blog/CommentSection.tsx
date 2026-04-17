@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, KeyboardEvent } from "react";
-import { MessageCircleReply, Trash2, X } from "lucide-react";
+import { Heart, MessageCircleReply, Trash2, X } from "lucide-react";
+import { getOrCreateBlogVisitorId } from "@/lib/blogVisitor";
 import Image from "next/image";
 import { GifPicker } from "./GifPicker";
 
@@ -16,6 +17,8 @@ type Comment = {
   reply_to_id: string | null;
   reply_to_name: string | null;
   created_at: string;
+  like_count: number;
+  liked: boolean;
 };
 
 function formatTime(iso: string) {
@@ -111,6 +114,7 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   const [hoveredId, setHoveredId]         = useState<string | null>(null);
   const [replyTarget, setReplyTarget]     = useState<{ id: string; name: string; preview: string } | null>(null);
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
+  const [pendingLikeId, setPendingLikeId] = useState<string | null>(null);
   const textareaRef                       = useRef<HTMLTextAreaElement>(null);
   const gifBtnRef                         = useRef<HTMLButtonElement>(null);
 
@@ -119,13 +123,47 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
   }, []);
 
   const fetchComments = useCallback(async () => {
-    const res = await fetch(`/api/comments?slug=${encodeURIComponent(postSlug)}`);
+    const visitorId = getOrCreateBlogVisitorId();
+    const params = new URLSearchParams({ slug: postSlug });
+    if (visitorId) params.set("visitor_id", visitorId);
+    const res = await fetch(`/api/comments?${params}`);
     if (res.ok) {
       const json = await res.json();
-      setComments(json.comments ?? []);
+      const rows = json.comments ?? [];
+      setComments(
+        rows.map((c: Comment) => ({
+          ...c,
+          like_count: typeof c.like_count === "number" ? c.like_count : 0,
+          liked: !!c.liked,
+        }))
+      );
     }
     setLoading(false);
   }, [postSlug]);
+
+  async function toggleCommentLike(commentId: string) {
+    const visitorId = getOrCreateBlogVisitorId();
+    if (!visitorId || pendingLikeId === commentId) return;
+    setPendingLikeId(commentId);
+    const res = await fetch("/api/comments/like", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comment_id: commentId, visitor_id: visitorId }),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, like_count: json.like_count ?? 0, liked: !!json.liked }
+            : c
+        )
+      );
+    } else {
+      await fetchComments();
+    }
+    setPendingLikeId(null);
+  }
 
   useEffect(() => { fetchComments(); }, [fetchComments]);
 
@@ -244,6 +282,19 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
                 <MessageCircleReply className="h-3.5 w-3.5" />
                 <span>Reply</span>
               </button>
+              <button
+                type="button"
+                onClick={() => void toggleCommentLike(comment.id)}
+                disabled={pendingLikeId === comment.id}
+                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-[#949ba4] hover:text-red-300 hover:bg-red-400/10 transition-colors disabled:opacity-50"
+                title={comment.liked ? "Unlike" : "Like"}
+                aria-pressed={comment.liked}
+              >
+                <Heart
+                  className={`h-3.5 w-3.5 shrink-0 ${comment.liked ? "fill-red-400 text-red-400" : ""}`}
+                />
+                <span className="tabular-nums">{comment.like_count}</span>
+              </button>
             </div>
             {comment.reply_to_name && (
               <p className="mb-1 text-[11px] text-[#949ba4]">
@@ -294,11 +345,23 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
                     [comment.id]: !isThreadExpanded,
                   }))
                 }
-                className="text-[11px] font-medium text-[#84a7ff] hover:text-[#a9c0ff] transition-colors"
+                className="inline-flex items-center gap-2 text-left text-[11px] font-medium text-[#84a7ff] hover:text-[#a9c0ff] transition-colors"
               >
-                {isThreadExpanded
-                  ? `Hide replies (${replies.length})`
-                  : `Show replies (${replies.length})`}
+                {isThreadExpanded ? (
+                  <>
+                    <span>Hide thread</span>
+                    <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[#b5bac1]">
+                      {replies.length} {replies.length === 1 ? "reply" : "replies"}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>Show replies</span>
+                    <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-[#b5bac1]">
+                      {replies.length}
+                    </span>
+                  </>
+                )}
               </button>
             </div>
 
