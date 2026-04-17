@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, X } from "lucide-react";
 import { GiphyFetch } from "@giphy/js-fetch-api";
 import { Grid } from "@giphy/react-components";
 import type { IGif } from "@giphy/js-types";
 
 const gf = new GiphyFetch(process.env.NEXT_PUBLIC_GIPHY_API_KEY!);
+
+// Open/close animation duration — keep in sync with `transition-all duration-*`
+// classes on the sheet + backdrop below.
+const CLOSE_MS = 220;
 
 function useDebounce(value: string, delay: number) {
   const [debounced, setDebounced] = useState(value);
@@ -30,6 +34,10 @@ export function GifPicker({
   const [query, setQuery]           = useState("");
   const [width, setWidth]           = useState(440);
   const [isMobile, setIsMobile]     = useState(false);
+  // Drives the open/close slide-down animation. Starts false so the sheet
+  // animates in on mount, and we flip it back to false before calling
+  // `onClose` so the reverse animation runs before unmount.
+  const [visible, setVisible]       = useState(false);
   // Visual-viewport metrics track the *visible* area on mobile (i.e. with the
   // soft keyboard subtracted). We use these to keep the sheet pinned above
   // the keyboard and sized to fit what the user can actually see.
@@ -37,6 +45,13 @@ export function GifPicker({
   const containerRef                = useRef<HTMLDivElement>(null);
   const inputRef                    = useRef<HTMLInputElement>(null);
   const debouncedQuery              = useDebounce(query, 400);
+
+  // Animate out, then call the parent-provided onClose once the transition
+  // completes. All internal close paths route through this.
+  const requestClose = useCallback(() => {
+    setVisible(false);
+    setTimeout(onClose, CLOSE_MS);
+  }, [onClose]);
 
   // Keep the Giphy Grid width in sync with the actual container size; this
   // matters because the container collapses from 460px → full-width on
@@ -90,8 +105,18 @@ export function GifPicker({
     };
   }, []);
 
+  // Trigger the opening animation one frame after mount so CSS transitions
+  // can actually interpolate from the initial hidden state.
   useEffect(() => {
-    inputRef.current?.focus();
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    // Focus the search on mount; we delay slightly so the slide-in completes
+    // before iOS raises the keyboard, which avoids a visual jump.
+    const id = setTimeout(() => inputRef.current?.focus(), CLOSE_MS);
+    return () => clearTimeout(id);
   }, []);
 
   // Close when tapping/clicking outside. Listen to `pointerdown` so this
@@ -99,21 +124,21 @@ export function GifPicker({
   useEffect(() => {
     function handler(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        onClose();
+        requestClose();
       }
     }
     document.addEventListener("pointerdown", handler);
     return () => document.removeEventListener("pointerdown", handler);
-  }, [onClose]);
+  }, [requestClose]);
 
   // Close on Escape for keyboard users / iOS Bluetooth keyboards.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") requestClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [requestClose]);
 
   // Lock body scroll while the sheet is open on mobile so the background
   // doesn't drift behind the keyboard when the user types in the search.
@@ -144,17 +169,20 @@ export function GifPicker({
     e.preventDefault();
     const url = gif.images.downsized?.url || gif.images.original?.url || "";
     onSelect({ url, title: gif.title });
-    onClose();
+    requestClose();
   }
 
   return (
     <>
       {/* Mobile-only dim backdrop so the sheet reads as a modal and taps on it
-          close the picker. Hidden on `sm+` where we keep the popover style. */}
+          close the picker. Hidden on `sm+` where we keep the popover style.
+          Fades alongside the sheet via the `visible` flag. */}
       <div
         aria-hidden
-        onClick={onClose}
-        className="sm:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+        onClick={requestClose}
+        className={`sm:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ease-out ${
+          visible ? "opacity-100" : "opacity-0"
+        }`}
       />
 
       <div
@@ -169,6 +197,13 @@ export function GifPicker({
           "sm:w-[460px] sm:max-w-[calc(100vw-2rem)] sm:max-h-none sm:rounded-lg",
           // ── Chrome — flush edges on mobile, rounded on desktop ──
           "bg-[#2b2d31] border border-[#1e1f22] shadow-2xl z-50 overflow-hidden",
+          // ── Open/close animation ──
+          // Mobile: slide up from the bottom of the screen.
+          // Desktop: small fade + scale from the bottom-right origin.
+          "transform-gpu transition-[transform,opacity] duration-200 ease-out sm:origin-bottom-right",
+          visible
+            ? "translate-y-0 opacity-100 sm:scale-100"
+            : "translate-y-full opacity-0 sm:translate-y-0 sm:scale-95",
         ].join(" ")}
         style={{
           boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
@@ -203,7 +238,7 @@ export function GifPicker({
           ))}
           <div className="flex-1" />
           <button
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close GIF picker"
             className="p-2 mr-1 text-[#949ba4] hover:text-white transition-colors rounded"
           >
@@ -211,7 +246,9 @@ export function GifPicker({
           </button>
         </div>
 
-        {/* Search */}
+        {/* Search — base font-size is 16px on mobile to prevent iOS Safari
+            from auto-zooming when the input receives focus, then drops to
+            14px on desktop where auto-zoom isn't a concern. */}
         <div className="px-3 pt-3 pb-2 shrink-0">
           <div className="flex items-center gap-2 bg-[#1e1f22] rounded-md px-3 py-2">
             <Search className="h-4 w-4 text-[#949ba4] shrink-0" />
@@ -221,7 +258,7 @@ export function GifPicker({
               placeholder={`Search ${tab}`}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent text-sm text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none"
+              className="flex-1 bg-transparent text-base sm:text-sm text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none"
             />
             {query && (
               <button onClick={() => setQuery("")} className="text-[#949ba4] hover:text-white transition-colors">
