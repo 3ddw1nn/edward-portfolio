@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
 import mdxManifest from "@/generated/mdx-post-manifest.json";
 
@@ -45,7 +45,7 @@ function mergeAdminPosts(
   return { posts: merged, hiddenDbDuplicateCount };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const password = req.headers.get("x-admin-password");
   if (!password || password !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
