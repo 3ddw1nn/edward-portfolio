@@ -22,3 +22,24 @@ export function formatPostDate(dateStr: string): string {
     day: "numeric",
   });
 }
+
+/**
+ * Full date + local time (12-hour). Used when we want to show the exact moment
+ * a post was last touched (e.g. tooltips, post-detail page).
+ */
+export function formatPostDateTime(dateStr: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
+  if (m) {
+    // Pure YYYY-MM-DD has no time component — fall back to the date-only form.
+    return formatPostDate(dateStr);
+  }
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}

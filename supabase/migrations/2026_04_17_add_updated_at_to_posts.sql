@@ -7,8 +7,10 @@ alter table public.posts
   add column if not exists updated_at timestamptz not null default now();
 
 -- Backfill existing rows so ordering is stable immediately after the migration.
+-- NOTE: `add column ... default now()` stamps every existing row with the
+-- same timestamp, so we unconditionally overwrite with `created_at` here.
 update public.posts
-  set updated_at = coalesce(updated_at, created_at, now());
+  set updated_at = coalesce(created_at, now());
 
 create or replace function public.set_posts_updated_at()
 returns trigger

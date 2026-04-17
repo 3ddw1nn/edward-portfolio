@@ -12,15 +12,19 @@ const COMMENTS_PAGE_SIZE = 10;
 import {
   ExternalLink,
   FilePenLine,
+  Heart,
   ImagePlus,
   Info,
   LogOut,
+  MessageCircle,
   MessageSquareText,
   Newspaper,
   Pencil,
+  Search,
   Sparkles,
   Trash2,
   Wand2,
+  X,
 } from "lucide-react";
 import {
   DEFAULT_OPENAI_CHAT_MODEL,
@@ -158,6 +162,9 @@ type Post = {
   date: string;
   excerpt: string;
   tags: string[];
+  coverImage?: string;
+  likeCount?: number;
+  commentCount?: number;
 };
 
 type Comment = {
@@ -196,6 +203,7 @@ export default function AdminPage() {
   const [pendingDeleteCommentId, setPendingDeleteCommentId] = useState<string | null>(null);
 
   const [postsPage, setPostsPage] = useState(1);
+  const [postsQuery, setPostsQuery] = useState("");
 
   const [showPromptGenerator, setShowPromptGenerator] = useState(false);
   const [generatorPrompt, setGeneratorPrompt] = useState("");
@@ -532,9 +540,11 @@ export default function AdminPage() {
     setExcerpt(p.excerpt ?? "");
     setTags(Array.isArray(p.tags) ? normalizeTagList(p.tags).join(", ") : "");
     setReadTime(p.read_time ?? "5 min read");
-    // Default the Date field to today on edit (still user-editable). The
-    // original publish date can always be restored by typing it back in.
-    setDate(new Date().toISOString().slice(0, 10));
+    // Preserve the post's existing date when editing so the admin sees the
+    // real value and can change it intentionally. Fall back to today only if
+    // the row somehow lacks one.
+    const savedDate = typeof p.date === "string" && p.date.trim() ? p.date.slice(0, 10) : "";
+    setDate(savedDate || new Date().toISOString().slice(0, 10));
     setContent(p.content ?? "");
     setTab("new");
     return true;
@@ -639,6 +649,25 @@ export default function AdminPage() {
     if (normalizedTagsInput !== tags) setTags(normalizedTagsInput);
     const viewSlug = editingSlug ?? slug;
 
+    // Compose `updated_at` from the picked date + the current wall-clock time
+    // in the admin's local timezone. This means "save at 2:15 PM PDT" stamps
+    // 2:15 PM PDT exactly. If the user picks a different day the time-of-day
+    // still tracks the moment of save, giving natural backdating behavior.
+    const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());
+    const now = new Date();
+    const composedLocal = dateMatch
+      ? new Date(
+          Number(dateMatch[1]),
+          Number(dateMatch[2]) - 1,
+          Number(dateMatch[3]),
+          now.getHours(),
+          now.getMinutes(),
+          now.getSeconds(),
+          now.getMilliseconds()
+        )
+      : now;
+    const updatedAtIso = composedLocal.toISOString();
+
     const res = editingSlug
       ? await fetch("/api/blog", {
           method: "PATCH",
@@ -653,6 +682,8 @@ export default function AdminPage() {
             content,
             tags: tagList,
             read_time: readTime,
+            date,
+            updated_at: updatedAtIso,
           }),
         })
       : await fetch("/api/blog", {
@@ -669,6 +700,7 @@ export default function AdminPage() {
             tags: tagList,
             date,
             read_time: readTime,
+            updated_at: updatedAtIso,
           }),
         });
 
@@ -1022,6 +1054,9 @@ export default function AdminPage() {
                       style={{ colorScheme: "dark" }}
                       className={`${inputClass} cursor-pointer`}
                     />
+                    <p className="mt-1.5 text-xs text-white/45">
+                      This is the timestamp shown on the blog and used to sort by “Most recent”.
+                    </p>
                   </Field>
                 </div>
 
@@ -1131,18 +1166,85 @@ export default function AdminPage() {
                   </p>
                 </div>
               ) : (() => {
-                const pageCount = Math.max(1, Math.ceil(posts.length / POSTS_PAGE_SIZE));
+                const qLower = postsQuery.trim().toLowerCase();
+                const filtered = qLower
+                  ? posts.filter((p) => {
+                      if (p.title.toLowerCase().includes(qLower)) return true;
+                      if (p.slug.toLowerCase().includes(qLower)) return true;
+                      return p.tags.some((tag) => tag.toLowerCase().includes(qLower));
+                    })
+                  : posts;
+                const pageCount = Math.max(1, Math.ceil(filtered.length / POSTS_PAGE_SIZE));
                 const safePage = Math.min(Math.max(1, postsPage), pageCount);
                 const start = (safePage - 1) * POSTS_PAGE_SIZE;
-                const pageSlice = posts.slice(start, start + POSTS_PAGE_SIZE);
+                const pageSlice = filtered.slice(start, start + POSTS_PAGE_SIZE);
                 return (
                 <>
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="relative flex-1 sm:max-w-md">
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45"
+                      aria-hidden
+                    />
+                    <input
+                      type="text"
+                      value={postsQuery}
+                      onChange={(e) => {
+                        setPostsQuery(e.target.value);
+                        setPostsPage(1);
+                      }}
+                      placeholder="Search by title, slug, or tag…"
+                      aria-label="Search posts"
+                      className="w-full rounded-xl border border-white/[0.12] bg-black/30 py-2.5 pl-9 pr-9 text-sm text-white placeholder:text-white/40 outline-none transition focus:border-white/35 focus:bg-black/40"
+                    />
+                    {postsQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPostsQuery("");
+                          setPostsPage(1);
+                        }}
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-white/50 transition hover:bg-white/10 hover:text-white"
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    )}
+                  </div>
+                  <p className={`${t.meta} text-xs`}>
+                    {qLower
+                      ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}`
+                      : `${posts.length} post${posts.length === 1 ? "" : "s"} · sorted by last updated`}
+                  </p>
+                </div>
+                {pageSlice.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-white/[0.2] bg-black/25 px-6 py-12 text-center">
+                    <p className={`${t.body}`}>
+                      No posts match <span className="font-mono text-white">“{postsQuery}”</span>.
+                    </p>
+                  </div>
+                ) : (
                 <ul className="space-y-4">
                   {pageSlice.map((post) => (
                     <li
                       key={post.id}
-                      className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-4 rounded-xl border border-white/[0.1] bg-black/30 p-5 sm:flex-row sm:items-stretch sm:justify-between"
                     >
+                      {post.coverImage ? (
+                        <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-lg border border-white/[0.1] bg-black/40 sm:h-auto sm:w-32 md:w-40">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={post.coverImage}
+                            alt=""
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="hidden h-24 w-full shrink-0 items-center justify-center rounded-lg border border-dashed border-white/[0.12] bg-black/20 text-[10px] uppercase tracking-[0.2em] text-white/35 sm:flex sm:h-auto sm:w-32 md:w-40">
+                          No image
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         {post.tags.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
@@ -1165,6 +1267,18 @@ export default function AdminPage() {
                         {post.excerpt ? (
                           <p className={`${t.body} mt-2 line-clamp-2 text-sm`}>{post.excerpt}</p>
                         ) : null}
+                        {(post.likeCount !== undefined || post.commentCount !== undefined) && (
+                          <div className="mt-3 flex items-center gap-4 text-xs text-white/55">
+                            <span className="inline-flex items-center gap-1.5">
+                              <MessageCircle className="h-3.5 w-3.5" aria-hidden />
+                              {post.commentCount ?? 0}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <Heart className="h-3.5 w-3.5" aria-hidden />
+                              {post.likeCount ?? 0}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-stretch lg:flex-row lg:items-center">
                         <Link
@@ -1196,6 +1310,7 @@ export default function AdminPage() {
                     </li>
                   ))}
                 </ul>
+                )}
                 <Pagination
                   mode="button"
                   page={safePage}
@@ -1205,9 +1320,12 @@ export default function AdminPage() {
                     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 />
-                <p className={`${t.meta} mt-3 text-center`}>
-                  Showing {start + 1}–{Math.min(start + POSTS_PAGE_SIZE, posts.length)} of {posts.length} posts
-                </p>
+                {filtered.length > 0 && (
+                  <p className={`${t.meta} mt-3 text-center`}>
+                    Showing {start + 1}–{Math.min(start + POSTS_PAGE_SIZE, filtered.length)} of {filtered.length}
+                    {qLower ? " matching posts" : " posts"}
+                  </p>
+                )}
                 </>
                 );
               })()}

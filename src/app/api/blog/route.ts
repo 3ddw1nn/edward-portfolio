@@ -12,8 +12,19 @@ function slugify(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Accept a client-supplied ISO timestamp for `updated_at` only when it parses
+ * cleanly. This lets the admin save with their exact local time; anything
+ * malformed falls through so the DB trigger can stamp `now()` itself.
+ */
+function resolveUpdatedAt(raw: unknown): string | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
 export async function POST(req: NextRequest) {
-  // Verify admin password
   const password = req.headers.get("x-admin-password");
   if (!password || password !== process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,6 +38,7 @@ export async function POST(req: NextRequest) {
     tags?: string[];
     date?: string;
     read_time?: string;
+    updated_at?: string;
   };
   try {
     body = await req.json();
@@ -44,6 +56,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const resolvedDate = date ?? new Date().toISOString().slice(0, 10);
+  const updatedAt = resolveUpdatedAt(body.updated_at);
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("posts")
@@ -53,8 +68,9 @@ export async function POST(req: NextRequest) {
       excerpt: excerpt ?? "",
       content,
       tags: tags ?? [],
-      date: date ?? new Date().toISOString().slice(0, 10),
+      date: resolvedDate,
       read_time: read_time ?? "5 min read",
+      ...(updatedAt ? { updated_at: updatedAt } : {}),
     })
     .select()
     .single();
@@ -78,7 +94,9 @@ export async function PATCH(req: NextRequest) {
     excerpt?: string;
     content?: string;
     tags?: string[];
+    date?: string;
     read_time?: string;
+    updated_at?: string;
   };
   try {
     body = await req.json();
@@ -86,7 +104,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { slug, title, excerpt, content, tags, read_time } = body;
+  const { slug, title, excerpt, content, tags, date, read_time } = body;
   if (!slug || !title || !content) {
     return NextResponse.json(
       { error: "slug, title, and content are required" },
@@ -94,7 +112,8 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const publishedDate = new Date().toISOString().slice(0, 10);
+  const resolvedDate = date ?? new Date().toISOString().slice(0, 10);
+  const updatedAt = resolveUpdatedAt(body.updated_at);
 
   const admin = createAdminClient();
   const { data, error } = await admin
@@ -105,7 +124,8 @@ export async function PATCH(req: NextRequest) {
       content,
       tags: tags ?? [],
       read_time: read_time ?? "5 min read",
-      date: publishedDate,
+      date: resolvedDate,
+      ...(updatedAt ? { updated_at: updatedAt } : {}),
     })
     .eq("slug", slug)
     .select()

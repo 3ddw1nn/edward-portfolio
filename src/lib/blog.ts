@@ -3,10 +3,15 @@ import { supabase } from "./supabase";
 export type PostMeta = {
   slug: string;
   title: string;
+  /** Editorial publish date the admin sets (YYYY-MM-DD). */
   date: string;
+  /** Row last-touched timestamp (ISO). Falls back to `date` on old schemas. */
+  updatedAt: string;
   excerpt: string;
   tags: string[];
   readTime: string;
+  /** First image found in the post body, if any. Used as a card thumbnail. */
+  coverImage?: string;
 };
 
 export type Post = PostMeta & {
@@ -28,6 +33,22 @@ function matchesQuery(p: PostMeta, qLower: string): boolean {
   return p.tags.some((tag) => tag.toLowerCase().includes(qLower));
 }
 
+const MARKDOWN_IMG = /!\[[^\]]*\]\(\s*([^)\s]+?)(?:\s+"[^"]*")?\s*\)/;
+const HTML_IMG = /<img\s[^>]*?src=["']([^"']+)["']/i;
+
+/**
+ * Pulls the first image URL out of a markdown body.
+ * Returns undefined when no image is present.
+ */
+export function extractFirstImage(content: string | null | undefined): string | undefined {
+  if (!content) return undefined;
+  const md = MARKDOWN_IMG.exec(content);
+  if (md?.[1]) return md[1];
+  const html = HTML_IMG.exec(content);
+  if (html?.[1]) return html[1];
+  return undefined;
+}
+
 /**
  * List posts (Supabase-only). Edge-safe.
  *
@@ -40,7 +61,9 @@ function matchesQuery(p: PostMeta, qLower: string): boolean {
 export async function getAllPosts(options: PostsListOptions = {}): Promise<PostMeta[]> {
   const qLower = normalizeQuery(options.q);
 
-  // Try the new shape first — if the column is missing this whole select fails.
+  // We select `content` purely to extract the first image for the card
+  // thumbnail. It's not cheap to ship every post's body, but this list is
+  // small (portfolio scale) and the client already filters in memory.
   let rows: Array<{
     slug: string;
     title: string;
@@ -48,17 +71,22 @@ export async function getAllPosts(options: PostsListOptions = {}): Promise<PostM
     excerpt: string;
     tags: string[] | null;
     read_time: string;
+    content: string | null;
+    updated_at?: string | null;
   }> = [];
 
+  // Primary sort: updated_at desc. Secondary: date desc (handles ties cleanly
+  // for rows migrated in the same batch, or when updated_at is still default).
   const preferred = await supabase
     .from("posts")
-    .select("slug, title, date, excerpt, tags, read_time, updated_at, created_at")
-    .order("updated_at", { ascending: false });
+    .select("slug, title, date, excerpt, tags, read_time, content, updated_at, created_at")
+    .order("updated_at", { ascending: false })
+    .order("date", { ascending: false });
 
   if (preferred.error) {
     const fallback = await supabase
       .from("posts")
-      .select("slug, title, date, excerpt, tags, read_time")
+      .select("slug, title, date, excerpt, tags, read_time, content")
       .order("date", { ascending: false });
     if (fallback.error) return [];
     rows = fallback.data ?? [];
@@ -70,9 +98,11 @@ export async function getAllPosts(options: PostsListOptions = {}): Promise<PostM
     slug: p.slug,
     title: p.title,
     date: p.date,
+    updatedAt: p.updated_at ?? p.date,
     excerpt: p.excerpt,
     tags: p.tags ?? [],
     readTime: p.read_time,
+    coverImage: extractFirstImage(p.content),
   }));
 
   return qLower ? posts.filter((p) => matchesQuery(p, qLower)) : posts;
@@ -92,9 +122,11 @@ export async function getPostBySlug(slug: string): Promise<Post> {
     slug: data.slug,
     title: data.title,
     date: data.date,
+    updatedAt: data.updated_at ?? data.date,
     excerpt: data.excerpt,
     tags: data.tags ?? [],
     readTime: data.read_time,
     content: data.content,
+    coverImage: extractFirstImage(data.content),
   };
 }

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, Heart, MessageCircle, Search, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Heart, MessageCircle, Search, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { PostMeta } from "@/lib/blog";
 import type { PostEngagement } from "@/lib/engagement";
 
-import { formatPostDate } from "@/lib/format-date";
+import { formatPostDate, formatPostDateTime } from "@/lib/format-date";
 import { Pagination } from "@/components/ui/Pagination";
 
 const BLOG_PAGE_SIZE = 10;
@@ -19,14 +19,26 @@ function matchesQuery(p: PostMeta, qLower: string): boolean {
 }
 
 /** Mutates the URL without navigating, so no server refetch / animation replay. */
-function syncUrl(query: string, page: number) {
+function syncUrl(query: string, page: number, sort: SortKey) {
   if (typeof window === "undefined") return;
   const params = new URLSearchParams();
   if (query.trim()) params.set("q", query.trim());
   if (page > 1) params.set("page", String(page));
+  if (sort !== "recent") params.set("sort", sort);
   const qs = params.toString();
   const next = qs ? `/blog?${qs}` : "/blog";
   window.history.replaceState(window.history.state, "", next);
+}
+
+type SortKey = "recent" | "popular";
+
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: "recent", label: "Most recent" },
+  { value: "popular", label: "Most popular" },
+];
+
+function isSortKey(v: string | null | undefined): v is SortKey {
+  return v === "recent" || v === "popular";
 }
 
 export function BlogPageContent({
@@ -34,22 +46,40 @@ export function BlogPageContent({
   engagement,
   initialQuery,
   initialPage,
+  initialSort,
 }: {
   posts: PostMeta[];
   engagement: Record<string, PostEngagement>;
   initialQuery: string;
   initialPage: number;
+  initialSort: SortKey;
 }) {
   // `query` is the committed search (drives filtering); `draft` is what's in the input.
   // Typing updates both immediately so filtering feels live.
   const [query, setQuery] = useState(initialQuery);
   const [draft, setDraft] = useState(initialQuery);
   const [page, setPage] = useState(initialPage);
+  const [sort, setSort] = useState<SortKey>(initialSort);
 
   const filtered = useMemo(() => {
     const qLower = query.trim().toLowerCase();
-    return qLower ? allPosts.filter((p) => matchesQuery(p, qLower)) : allPosts;
-  }, [allPosts, query]);
+    const base = qLower ? allPosts.filter((p) => matchesQuery(p, qLower)) : allPosts;
+
+    if (sort === "popular") {
+      // Rank by combined engagement; keep the updated_at order (which is already
+      // how `allPosts` arrives from the server) as a stable tiebreaker.
+      const indexOf = new Map(allPosts.map((p, i) => [p.slug, i]));
+      return [...base].sort((a, b) => {
+        const ea = engagement[a.slug] ?? { commentCount: 0, likeCount: 0, liked: false };
+        const eb = engagement[b.slug] ?? { commentCount: 0, likeCount: 0, liked: false };
+        const scoreA = ea.likeCount + ea.commentCount;
+        const scoreB = eb.likeCount + eb.commentCount;
+        if (scoreA !== scoreB) return scoreB - scoreA;
+        return (indexOf.get(a.slug) ?? 0) - (indexOf.get(b.slug) ?? 0);
+      });
+    }
+    return base;
+  }, [allPosts, engagement, query, sort]);
 
   const totalFiltered = filtered.length;
   const pageCount = Math.max(1, Math.ceil(totalFiltered / BLOG_PAGE_SIZE));
@@ -57,10 +87,10 @@ export function BlogPageContent({
   const start = (safePage - 1) * BLOG_PAGE_SIZE;
   const pagePosts = filtered.slice(start, start + BLOG_PAGE_SIZE);
 
-  // Keep the URL in sync whenever the committed query or page changes.
+  // Keep the URL in sync whenever the committed query, page, or sort changes.
   useEffect(() => {
-    syncUrl(query, safePage);
-  }, [query, safePage]);
+    syncUrl(query, safePage, sort);
+  }, [query, safePage, sort]);
 
   const commitSearch = useCallback((nextQuery: string) => {
     setQuery(nextQuery);
@@ -80,10 +110,16 @@ export function BlogPageContent({
   function handleShowAll() {
     setDraft("");
     commitSearch("");
+    setSort("recent");
     setPage(1);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
+
+  function handleSortChange(next: SortKey) {
+    setSort(next);
+    setPage(1);
   }
 
   function handlePageChange(p: number) {
@@ -183,7 +219,29 @@ export function BlogPageContent({
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="relative inline-flex items-center">
+              <span className="sr-only">Sort posts</span>
+              <select
+                value={sort}
+                onChange={(e) => {
+                  if (isSortKey(e.target.value)) handleSortChange(e.target.value);
+                }}
+                aria-label="Sort posts"
+                className="appearance-none rounded-md border border-white/15 bg-white/[0.04] pl-4 pr-10 py-2 text-xs font-medium uppercase tracking-[0.15em] text-white outline-none transition hover:border-white/30 focus:border-white/35"
+                style={{ colorScheme: "dark" }}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                aria-hidden
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/60"
+              />
+            </label>
             <p className="font-brutal text-[10px] tracking-[0.18em] uppercase text-white/35">
               {hasQuery
                 ? `${totalFiltered} match${totalFiltered === 1 ? "" : "es"} for “${query}”`
@@ -223,8 +281,19 @@ export function BlogPageContent({
             <div key={post.slug}>
               <Link
                 href={`/blog/${post.slug}`}
-                className="group flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 py-10 border-b border-white/10 hover:border-white/30 transition-colors duration-300"
+                className="group flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 sm:gap-6 py-10 border-b border-white/10 hover:border-white/30 transition-colors duration-300"
               >
+                {post.coverImage && (
+                  <div className="relative w-full sm:w-40 md:w-48 aspect-[16/10] sm:aspect-square shrink-0 overflow-hidden rounded-md border border-white/10 bg-white/[0.02]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.coverImage}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover opacity-85 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+                    />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-3 mb-3">
                     {post.tags.map((tag) => (
@@ -245,8 +314,11 @@ export function BlogPageContent({
                 </div>
 
                 <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2 shrink-0 sm:pt-1">
-                  <span className="font-brutal text-[10px] tracking-[0.15em] uppercase text-white/35">
-                    {formatPostDate(post.date)}
+                  <span
+                    className="font-brutal text-[10px] tracking-[0.15em] uppercase text-white/35"
+                    title={`Last updated ${formatPostDateTime(post.updatedAt)}`}
+                  >
+                    {formatPostDate(post.updatedAt)}
                   </span>
                   <span className="font-brutal text-[10px] tracking-[0.15em] uppercase text-white/35">
                     {post.readTime}

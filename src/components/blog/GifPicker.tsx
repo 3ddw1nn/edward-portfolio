@@ -33,25 +33,62 @@ export function GifPicker({
   const inputRef                    = useRef<HTMLInputElement>(null);
   const debouncedQuery              = useDebounce(query, 400);
 
+  // Keep the Giphy Grid width in sync with the actual container size; this
+  // matters because the container collapses from 460px → full-width on
+  // mobile and can resize on orientation changes / keyboard toggles.
   useEffect(() => {
-    if (containerRef.current) {
-      setWidth(containerRef.current.offsetWidth - 16);
-    }
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => setWidth(Math.max(0, el.offsetWidth - 16));
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
   }, []);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // Close when tapping/clicking outside. Listen to `pointerdown` so this
+  // works for both mouse and touch without the 300 ms delay of `click`.
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    function handler(e: PointerEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         onClose();
       }
     }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
   }, [onClose]);
+
+  // Close on Escape for keyboard users / iOS Bluetooth keyboards.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Lock body scroll while the sheet is open on mobile so the background
+  // doesn't drift behind the keyboard when the user types in the search.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isSmall = window.matchMedia("(max-width: 639px)").matches;
+    if (!isSmall) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   const fetchGifs = (offset: number) => {
     const isSticker = tab === "Stickers";
@@ -73,78 +110,107 @@ export function GifPicker({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute bottom-full right-0 mb-2 w-[460px] max-w-[calc(100vw-2rem)] bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl z-50 overflow-hidden"
-      style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
-    >
-      {/* Tabs */}
-      <div className="flex items-center border-b border-[#1e1f22]">
-        {(["GIFs", "Stickers"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => { setTab(t); setQuery(""); }}
-            className={`px-5 py-3 text-sm font-semibold transition-colors relative ${
-              tab === t
-                ? "text-white"
-                : "text-[#949ba4] hover:text-[#dbdee1]"
-            }`}
-          >
-            {t}
-            {tab === t && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5865f2] rounded-t-sm" />
-            )}
-          </button>
-        ))}
-        <div className="flex-1" />
-        <button
-          onClick={onClose}
-          className="p-2 mr-1 text-[#949ba4] hover:text-white transition-colors rounded"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+    <>
+      {/* Mobile-only dim backdrop so the sheet reads as a modal and taps on it
+          close the picker. Hidden on `sm+` where we keep the popover style. */}
+      <div
+        aria-hidden
+        onClick={onClose}
+        className="sm:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+      />
 
-      {/* Search */}
-      <div className="px-3 pt-3 pb-2">
-        <div className="flex items-center gap-2 bg-[#1e1f22] rounded-md px-3 py-2">
-          <Search className="h-4 w-4 text-[#949ba4] shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder={`Search ${tab}`}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none"
-          />
-          {query && (
-            <button onClick={() => setQuery("")} className="text-[#949ba4] hover:text-white transition-colors">
-              <X className="h-3.5 w-3.5" />
+      <div
+        ref={containerRef}
+        className={[
+          // ── Mobile: fixed full-width bottom sheet, safe from keyboard ──
+          "fixed inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))]",
+          "max-h-[min(70vh,32rem)] flex flex-col",
+          // ── Desktop (sm+): restore the original anchored dropdown ──
+          "sm:absolute sm:inset-x-auto sm:bottom-full sm:right-0 sm:mb-2",
+          "sm:w-[460px] sm:max-w-[calc(100vw-2rem)] sm:max-h-none",
+          // ── Chrome ──
+          "bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl z-50 overflow-hidden",
+        ].join(" ")}
+        style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="GIF picker"
+      >
+        {/* Drag handle (mobile affordance only) */}
+        <div className="sm:hidden flex justify-center pt-2 pb-1">
+          <div className="h-1 w-10 rounded-full bg-white/20" />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center border-b border-[#1e1f22] shrink-0">
+          {(["GIFs", "Stickers"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setQuery(""); }}
+              className={`px-5 py-3 text-sm font-semibold transition-colors relative ${
+                tab === t
+                  ? "text-white"
+                  : "text-[#949ba4] hover:text-[#dbdee1]"
+              }`}
+            >
+              {t}
+              {tab === t && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5865f2] rounded-t-sm" />
+              )}
             </button>
-          )}
+          ))}
+          <div className="flex-1" />
+          <button
+            onClick={onClose}
+            aria-label="Close GIF picker"
+            className="p-2 mr-1 text-[#949ba4] hover:text-white transition-colors rounded"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="px-3 pt-3 pb-2 shrink-0">
+          <div className="flex items-center gap-2 bg-[#1e1f22] rounded-md px-3 py-2">
+            <Search className="h-4 w-4 text-[#949ba4] shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={`Search ${tab}`}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 bg-transparent text-sm text-[#dbdee1] placeholder:text-[#6d6f78] focus:outline-none"
+            />
+            {query && (
+              <button onClick={() => setQuery("")} className="text-[#949ba4] hover:text-white transition-colors">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Grid — flex-1 on mobile so it always fills the remaining sheet
+            height and shrinks gracefully when the keyboard appears. */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-3 giphy-grid sm:h-72 sm:flex-none">
+          <Grid
+            key={`${tab}-${debouncedQuery}`}
+            fetchGifs={fetchGifs}
+            width={width}
+            columns={3}
+            gutter={4}
+            noResultsMessage={
+              <p className="text-sm text-[#949ba4] text-center py-8">No results found.</p>
+            }
+            onGifClick={handleGifClick}
+            hideAttribution
+          />
+        </div>
+
+        {/* GIPHY branding (required) */}
+        <div className="px-3 py-1.5 border-t border-[#1e1f22] flex justify-end shrink-0">
+          <span className="text-[10px] text-[#4e5058] tracking-wide">Powered by GIPHY</span>
         </div>
       </div>
-
-      {/* Grid */}
-      <div className="h-72 overflow-y-auto px-3 pb-3 giphy-grid">
-        <Grid
-          key={`${tab}-${debouncedQuery}`}
-          fetchGifs={fetchGifs}
-          width={width}
-          columns={3}
-          gutter={4}
-          noResultsMessage={
-            <p className="text-sm text-[#949ba4] text-center py-8">No results found.</p>
-          }
-          onGifClick={handleGifClick}
-          hideAttribution
-        />
-      </div>
-
-      {/* GIPHY branding (required) */}
-      <div className="px-3 py-1.5 border-t border-[#1e1f22] flex justify-end">
-        <span className="text-[10px] text-[#4e5058] tracking-wide">Powered by GIPHY</span>
-      </div>
-    </div>
+    </>
   );
 }

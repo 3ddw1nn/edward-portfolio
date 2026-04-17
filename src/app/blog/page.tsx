@@ -14,15 +14,16 @@ export const metadata = {
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; sort?: string }>;
 }) {
-  const { page: pageParam, q: qParam } = await searchParams;
+  const { page: pageParam, q: qParam, sort: sortParam } = await searchParams;
   const parsed = Number(pageParam);
   const initialPage = Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
   const initialQuery = (qParam ?? "").trim();
+  const initialSort: "recent" | "popular" = sortParam === "popular" ? "popular" : "recent";
 
-  // Fetch the full list once. Filtering + pagination happen client-side so the
-  // hero doesn't re-animate every time the user types or flips pages.
+  // Fetch the full list once. Filtering, sorting, and pagination happen
+  // client-side so the hero doesn't re-animate every time state changes.
   const allPosts = await getAllPosts();
   const engagement = await getPostEngagementStats(
     allPosts.map((p) => p.slug),
@@ -35,6 +36,7 @@ export default async function BlogPage({
       engagement={engagement}
       initialPage={initialPage}
       initialQuery={initialQuery}
+      initialSort={initialSort}
     />
   );
 }

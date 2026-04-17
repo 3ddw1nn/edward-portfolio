@@ -23,13 +23,17 @@ create index if not exists posts_date_idx on public.posts (date desc);
 create index if not exists posts_updated_at_idx on public.posts (updated_at desc);
 
 -- Bump updated_at automatically on row modifications so the blog list
--- can surface recently-edited posts to the top.
+-- can surface recently-edited posts to the top, but let admins set the
+-- timestamp manually (the trigger skips the bump when the caller provides
+-- an explicit new value).
 create or replace function public.set_posts_updated_at()
 returns trigger
 language plpgsql
 as $$
 begin
-  new.updated_at := now();
+  if new.updated_at is not distinct from old.updated_at then
+    new.updated_at := now();
+  end if;
   return new;
 end;
 $$;
