@@ -77,6 +77,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setMenuOpen(false)}
                 className="font-brutal text-2xl sm:text-3xl tracking-[0.15em] uppercase transition-colors duration-200 border-b pb-6 text-white border-white/15 hover:text-white/70"
               >
                 {link.label}
