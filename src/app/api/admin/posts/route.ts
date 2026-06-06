@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 import { extractFirstImage } from "@/lib/blog";
 import { getPostEngagementStats } from "@/lib/engagement";
 
@@ -28,64 +28,39 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const admin = createAdminClient();
-
-  // Prefer `updated_at` so edits bubble to the top. Gracefully fall back on
-  // older schemas that haven't run the migration. `date` is a stable tiebreaker.
-  const preferred = await admin
-    .from("posts")
-    .select("id, slug, title, date, excerpt, tags, content, updated_at")
-    .order("updated_at", { ascending: false })
-    .order("date", { ascending: false });
-
-  let rows: Array<{
-    id: string;
-    slug: string;
-    title: string;
-    date: string;
-    excerpt: string;
-    tags: string[] | null;
-    content: string | null;
-  }> = [];
-
-  let supabaseError: string | null = null;
-
-  if (preferred.error) {
-    const fallback = await admin
-      .from("posts")
-      .select("id, slug, title, date, excerpt, tags, content")
-      .order("date", { ascending: false });
-    if (fallback.error) {
-      return NextResponse.json({ posts: [], supabaseError: fallback.error.message });
-    }
-    rows = fallback.data ?? [];
-  } else {
-    rows = preferred.data ?? [];
-  }
-
-  // Best-effort engagement. If this fails (bucket missing, etc.) we still return
-  // the list with zeroed counts so the admin UI isn't blocked.
-  let engagement: Record<string, { commentCount: number; likeCount: number }> = {};
   try {
-    engagement = await getPostEngagementStats(rows.map((r) => r.slug), null);
+    const rows = await sql`
+      SELECT id, slug, title, date, excerpt, tags, content, updated_at
+      FROM posts
+      ORDER BY updated_at DESC, date DESC
+    `;
+
+    let engagement: Record<string, { commentCount: number; likeCount: number }> = {};
+    let dbError: string | null = null;
+    try {
+      engagement = await getPostEngagementStats(rows.map((r) => r.slug as string), null);
+    } catch (e) {
+      dbError = e instanceof Error ? e.message : "Engagement lookup failed";
+    }
+
+    const posts: AdminPostRow[] = rows.map((r) => {
+      const eng = engagement[r.slug as string] ?? { commentCount: 0, likeCount: 0 };
+      return {
+        id: r.id as string,
+        slug: r.slug as string,
+        title: r.title as string,
+        date: r.date as string,
+        excerpt: r.excerpt as string,
+        tags: normalizeTags(r.tags),
+        coverImage: extractFirstImage(r.content as string),
+        likeCount: eng.likeCount,
+        commentCount: eng.commentCount,
+      };
+    });
+
+    return NextResponse.json({ posts, supabaseError: dbError });
   } catch (e) {
-    supabaseError = e instanceof Error ? e.message : "Engagement lookup failed";
+    const message = e instanceof Error ? e.message : "Query failed";
+    return NextResponse.json({ posts: [], supabaseError: message });
   }
-
-  const posts: AdminPostRow[] = rows.map((r) => {
-    const eng = engagement[r.slug] ?? { commentCount: 0, likeCount: 0 };
-    return {
-      id: r.id,
-      slug: r.slug,
-      title: r.title,
-      date: r.date,
-      excerpt: r.excerpt,
-      tags: normalizeTags(r.tags),
-      coverImage: extractFirstImage(r.content),
-      likeCount: eng.likeCount,
-      commentCount: eng.commentCount,
-    };
-  });
-
-  return NextResponse.json({ posts, supabaseError });
 }

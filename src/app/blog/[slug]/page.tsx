@@ -2,7 +2,7 @@ import type { ImgHTMLAttributes } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, MessageCircle } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllPosts, getPostBySlug } from "@/lib/blog";
+import { getPostBySlug } from "@/lib/blog";
 import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
@@ -10,17 +10,10 @@ import { BlogPostAdminToolbar } from "@/components/blog/BlogPostAdminToolbar";
 import { PostLikeButton } from "@/components/blog/PostLikeButton";
 import { formatPostDate, formatPostDateTime } from "@/lib/format-date";
 
-export async function generateStaticParams() {
-  const posts = await getAllPosts();
-  return posts.map((p) => ({ slug: p.slug }));
-}
-
-/** Allow new Supabase posts without redeploying (on-demand). */
-export const dynamicParams = true;
-
 // Render server-side on every request so engagement counts (comments, likes)
 // and the `updated_at` timestamp reflect the latest DB state after admin
-// deletes / edits, instead of being frozen at build time.
+// deletes / edits, instead of being frozen at build time. Edge runtime can't
+// coexist with `generateStaticParams`, so no pre-rendering here.
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 

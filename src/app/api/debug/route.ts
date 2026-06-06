@@ -4,15 +4,14 @@ export const runtime = "edge";
 
 export async function GET() {
   try {
-    // Keep this route Edge-compatible for Cloudflare Pages deployments.
     return NextResponse.json({
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       runtime: "edge",
       checks: {
         adminPasswordConfigured: Boolean(process.env.ADMIN_PASSWORD),
-        supabaseUrlConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-        supabaseAnonKeyConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+        databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
+        blobTokenConfigured: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
       },
     });
   } catch (error) {

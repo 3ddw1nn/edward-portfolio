@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 
 export const runtime = "edge";
 
@@ -12,11 +12,6 @@ function slugify(title: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/**
- * Accept a client-supplied ISO timestamp for `updated_at` only when it parses
- * cleanly. This lets the admin save with their exact local time; anything
- * malformed falls through so the DB trigger can stamp `now()` itself.
- */
 function resolveUpdatedAt(raw: unknown): string | null {
   if (typeof raw !== "string" || !raw.trim()) return null;
   const d = new Date(raw);
@@ -50,36 +45,33 @@ export async function POST(req: NextRequest) {
   const slug = body.slug || slugify(title ?? "");
 
   if (!title || !content || !slug) {
-    return NextResponse.json(
-      { error: "title, content are required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "title, content are required" }, { status: 400 });
   }
 
   const resolvedDate = date ?? new Date().toISOString().slice(0, 10);
   const updatedAt = resolveUpdatedAt(body.updated_at);
+  const safeTags = tags ?? [];
+  const safeExcerpt = excerpt ?? "";
+  const safeReadTime = read_time ?? "5 min read";
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("posts")
-    .insert({
-      slug,
-      title,
-      excerpt: excerpt ?? "",
-      content,
-      tags: tags ?? [],
-      date: resolvedDate,
-      read_time: read_time ?? "5 min read",
-      ...(updatedAt ? { updated_at: updatedAt } : {}),
-    })
-    .select()
-    .single();
+  try {
+    const rows = updatedAt
+      ? await sql`
+          INSERT INTO posts (slug, title, excerpt, content, tags, date, read_time, updated_at)
+          VALUES (${slug}, ${title}, ${safeExcerpt}, ${content}, ${safeTags}, ${resolvedDate}, ${safeReadTime}, ${updatedAt})
+          RETURNING *
+        `
+      : await sql`
+          INSERT INTO posts (slug, title, excerpt, content, tags, date, read_time)
+          VALUES (${slug}, ${title}, ${safeExcerpt}, ${content}, ${safeTags}, ${resolvedDate}, ${safeReadTime})
+          RETURNING *
+        `;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ post: rows[0] }, { status: 201 });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Insert failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ post: data }, { status: 201 });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -106,39 +98,44 @@ export async function PATCH(req: NextRequest) {
 
   const { slug, title, excerpt, content, tags, date, read_time } = body;
   if (!slug || !title || !content) {
-    return NextResponse.json(
-      { error: "slug, title, and content are required" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "slug, title, and content are required" }, { status: 400 });
   }
 
   const resolvedDate = date ?? new Date().toISOString().slice(0, 10);
   const updatedAt = resolveUpdatedAt(body.updated_at);
+  const safeTags = tags ?? [];
+  const safeExcerpt = excerpt ?? "";
+  const safeReadTime = read_time ?? "5 min read";
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("posts")
-    .update({
-      title,
-      excerpt: excerpt ?? "",
-      content,
-      tags: tags ?? [],
-      read_time: read_time ?? "5 min read",
-      date: resolvedDate,
-      ...(updatedAt ? { updated_at: updatedAt } : {}),
-    })
-    .eq("slug", slug)
-    .select()
-    .maybeSingle();
+  try {
+    // When updatedAt is provided, set it explicitly (trigger skips bump when value changes).
+    // When omitted, leave updated_at out of the SET clause so the trigger bumps it to now().
+    const rows = updatedAt
+      ? await sql`
+          UPDATE posts
+          SET title = ${title}, excerpt = ${safeExcerpt}, content = ${content},
+              tags = ${safeTags}, read_time = ${safeReadTime}, date = ${resolvedDate},
+              updated_at = ${updatedAt}
+          WHERE slug = ${slug}
+          RETURNING *
+        `
+      : await sql`
+          UPDATE posts
+          SET title = ${title}, excerpt = ${safeExcerpt}, content = ${content},
+              tags = ${safeTags}, read_time = ${safeReadTime}, date = ${resolvedDate}
+          WHERE slug = ${slug}
+          RETURNING *
+        `;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "No post found with that slug" }, { status: 404 });
+    }
+
+    return NextResponse.json({ post: rows[0] });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Update failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-  if (!data) {
-    return NextResponse.json({ error: "No post found with that slug" }, { status: 404 });
-  }
-
-  return NextResponse.json({ post: data });
 }
 
 export async function DELETE(req: NextRequest) {
@@ -152,12 +149,11 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "slug is required" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-  const { error } = await admin.from("posts").delete().eq("slug", slug);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await sql`DELETE FROM posts WHERE slug = ${slug}`;
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Delete failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }

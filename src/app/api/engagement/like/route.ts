@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 import { getSinglePostEngagement } from "@/lib/engagement";
 
 export const runtime = "edge";
@@ -27,53 +27,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "visitor_id must be a UUID" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-
-  const { data: existing, error: findError } = await admin
-    .from("post_likes")
-    .select("id")
-    .eq("post_slug", slug)
-    .eq("visitor_id", visitorId)
-    .maybeSingle();
-
-  function likeHttpStatus(message: string) {
-    if (/post_likes|schema cache|does not exist/i.test(message)) return 503;
-    return 500;
-  }
-
-  if (findError) {
-    return NextResponse.json(
-      { error: findError.message },
-      { status: likeHttpStatus(findError.message) }
-    );
-  }
-
-  if (existing?.id) {
-    const { error: delError } = await admin.from("post_likes").delete().eq("id", existing.id);
-    if (delError) {
-      return NextResponse.json(
-        { error: delError.message },
-        { status: likeHttpStatus(delError.message) }
-      );
-    }
-  } else {
-    const { error: insError } = await admin.from("post_likes").insert({
-      post_slug: slug,
-      visitor_id: visitorId,
-    });
-    if (insError) {
-      return NextResponse.json(
-        { error: insError.message },
-        { status: likeHttpStatus(insError.message) }
-      );
-    }
-  }
-
   try {
+    const existing = await sql`
+      SELECT id FROM post_likes WHERE post_slug = ${slug} AND visitor_id = ${visitorId}::uuid
+    `;
+
+    if (existing.length > 0) {
+      await sql`DELETE FROM post_likes WHERE id = ${existing[0].id as string}::uuid`;
+    } else {
+      await sql`INSERT INTO post_likes (post_slug, visitor_id) VALUES (${slug}, ${visitorId}::uuid)`;
+    }
+
     const stats = await getSinglePostEngagement(slug, visitorId);
     return NextResponse.json(stats);
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Failed to refresh engagement";
+    const message = e instanceof Error ? e.message : "Like toggle failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase";
+import { sql } from "@/lib/db";
 
 export const runtime = "edge";
 
-/** Load a single post by slug for editing in the admin form. */
 export async function GET(req: NextRequest) {
   const password = req.headers.get("x-admin-password");
   if (!password || password !== process.env.ADMIN_PASSWORD) {
@@ -15,18 +14,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "slug is required" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
-  const { data, error } = await admin.from("posts").select("*").eq("slug", slug).maybeSingle();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const rows = await sql`SELECT * FROM posts WHERE slug = ${slug}`;
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "No post found for this slug." }, { status: 404 });
+    }
+    return NextResponse.json({ post: rows[0] });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Query failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-  if (!data) {
-    return NextResponse.json(
-      { error: "No post found for this slug." },
-      { status: 404 }
-    );
-  }
-
-  return NextResponse.json({ post: data });
 }

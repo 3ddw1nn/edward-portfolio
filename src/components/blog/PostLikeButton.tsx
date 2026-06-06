@@ -61,7 +61,7 @@ export function PostLikeButton({ slug, initialLikeCount, size = "inline" }: Prop
       const raw = typeof json.error === "string" ? json.error : "Could not save like";
       const hint =
         /post_likes|schema cache/i.test(raw)
-          ? " Run supabase/schema_seed.sql in the Supabase SQL editor, then try again."
+          ? " The post_likes table may not exist yet — run neon/schema.sql against your database."
           : "";
       setError(`${raw}${hint}`);
     }

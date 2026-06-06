@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase";
+import { put } from "@vercel/blob";
 
 export const runtime = "edge";
 
@@ -51,19 +51,17 @@ export async function POST(req: NextRequest) {
     .replace(/\.[^/.]+$/, "")
     .replace(/[^\w.-]+/g, "-")
     .slice(0, 80);
-  const objectPath = `${crypto.randomUUID()}-${safeBase}.${ext}`;
+  const filename = `blog-images/${crypto.randomUUID()}-${safeBase}.${ext}`;
 
-  const admin = createAdminClient();
-  const { error: upErr } = await admin.storage.from("blog-images").upload(objectPath, buf, {
-    contentType: type,
-    upsert: false,
-  });
+  try {
+    const blob = await put(filename, buf, {
+      access: "public",
+      contentType: type,
+    });
 
-  if (upErr) {
-    return NextResponse.json({ error: upErr.message }, { status: 500 });
+    return NextResponse.json({ url: blob.url, path: filename });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Upload failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const { data: pub } = admin.storage.from("blog-images").getPublicUrl(objectPath);
-
-  return NextResponse.json({ url: pub.publicUrl, path: objectPath });
 }

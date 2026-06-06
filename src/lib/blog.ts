@@ -1,11 +1,11 @@
-import { supabase } from "./supabase";
+import { sql } from "./db";
 
 export type PostMeta = {
   slug: string;
   title: string;
   /** Editorial publish date the admin sets (YYYY-MM-DD). */
   date: string;
-  /** Row last-touched timestamp (ISO). Falls back to `date` on old schemas. */
+  /** Row last-touched timestamp (ISO). */
   updatedAt: string;
   excerpt: string;
   tags: string[];
@@ -19,7 +19,6 @@ export type Post = PostMeta & {
 };
 
 type PostsListOptions = {
-  /** Optional case-insensitive query applied to title and tags. */
   q?: string;
 };
 
@@ -36,10 +35,6 @@ function matchesQuery(p: PostMeta, qLower: string): boolean {
 const MARKDOWN_IMG = /!\[[^\]]*\]\(\s*([^)\s]+?)(?:\s+"[^"]*")?\s*\)/;
 const HTML_IMG = /<img\s[^>]*?src=["']([^"']+)["']/i;
 
-/**
- * Pulls the first image URL out of a markdown body.
- * Returns undefined when no image is present.
- */
 export function extractFirstImage(content: string | null | undefined): string | undefined {
   if (!content) return undefined;
   const md = MARKDOWN_IMG.exec(content);
@@ -49,84 +44,43 @@ export function extractFirstImage(content: string | null | undefined): string | 
   return undefined;
 }
 
-/**
- * List posts (Supabase-only). Edge-safe.
- *
- * Orders by `updated_at` desc when the column exists (so editing a post
- * surfaces it to the top); gracefully falls back to `date` desc on older
- * schemas that haven't run the `add_updated_at_to_posts` migration yet.
- *
- * Optional `q` does case-insensitive matching on title and tags.
- */
 export async function getAllPosts(options: PostsListOptions = {}): Promise<PostMeta[]> {
   const qLower = normalizeQuery(options.q);
 
-  // We select `content` purely to extract the first image for the card
-  // thumbnail. It's not cheap to ship every post's body, but this list is
-  // small (portfolio scale) and the client already filters in memory.
-  let rows: Array<{
-    slug: string;
-    title: string;
-    date: string;
-    excerpt: string;
-    tags: string[] | null;
-    read_time: string;
-    content: string | null;
-    updated_at?: string | null;
-  }> = [];
-
-  // Primary sort: updated_at desc. Secondary: date desc (handles ties cleanly
-  // for rows migrated in the same batch, or when updated_at is still default).
-  const preferred = await supabase
-    .from("posts")
-    .select("slug, title, date, excerpt, tags, read_time, content, updated_at, created_at")
-    .order("updated_at", { ascending: false })
-    .order("date", { ascending: false });
-
-  if (preferred.error) {
-    const fallback = await supabase
-      .from("posts")
-      .select("slug, title, date, excerpt, tags, read_time, content")
-      .order("date", { ascending: false });
-    if (fallback.error) return [];
-    rows = fallback.data ?? [];
-  } else {
-    rows = preferred.data ?? [];
-  }
+  const rows = await sql`
+    SELECT slug, title, date, excerpt, tags, read_time, content, updated_at
+    FROM posts
+    ORDER BY updated_at DESC, date DESC
+  `;
 
   const posts: PostMeta[] = rows.map((p) => ({
-    slug: p.slug,
-    title: p.title,
-    date: p.date,
-    updatedAt: p.updated_at ?? p.date,
-    excerpt: p.excerpt,
-    tags: p.tags ?? [],
-    readTime: p.read_time,
-    coverImage: extractFirstImage(p.content),
+    slug: p.slug as string,
+    title: p.title as string,
+    date: p.date as string,
+    updatedAt: (p.updated_at as string) ?? (p.date as string),
+    excerpt: p.excerpt as string,
+    tags: (p.tags as string[]) ?? [],
+    readTime: p.read_time as string,
+    coverImage: extractFirstImage(p.content as string),
   }));
 
   return qLower ? posts.filter((p) => matchesQuery(p, qLower)) : posts;
 }
 
-/** Load a single post by slug. Edge-safe. Throws when not found. */
 export async function getPostBySlug(slug: string): Promise<Post> {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  if (error || !data) throw new Error(`Post not found: ${slug}`);
+  const rows = await sql`SELECT * FROM posts WHERE slug = ${slug}`;
+  if (rows.length === 0) throw new Error(`Post not found: ${slug}`);
+  const p = rows[0];
 
   return {
-    slug: data.slug,
-    title: data.title,
-    date: data.date,
-    updatedAt: data.updated_at ?? data.date,
-    excerpt: data.excerpt,
-    tags: data.tags ?? [],
-    readTime: data.read_time,
-    content: data.content,
-    coverImage: extractFirstImage(data.content),
+    slug: p.slug as string,
+    title: p.title as string,
+    date: p.date as string,
+    updatedAt: (p.updated_at as string) ?? (p.date as string),
+    excerpt: p.excerpt as string,
+    tags: (p.tags as string[]) ?? [],
+    readTime: p.read_time as string,
+    content: p.content as string,
+    coverImage: extractFirstImage(p.content as string),
   };
 }

@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase";
+import { sql } from "./db";
 
 export type PostEngagement = {
   commentCount: number;
@@ -19,38 +19,27 @@ export async function getPostEngagementStats(
   const unique = [...new Set(slugs)].filter(Boolean);
   if (unique.length === 0) return {};
 
-  const admin = createAdminClient();
   const base = emptyStats(unique, false);
 
-  const [commentRes, likeRes, mineRes] = await Promise.all([
-    admin.from("comments").select("post_slug").in("post_slug", unique),
-    admin.from("post_likes").select("post_slug").in("post_slug", unique),
+  const [commentRows, likeRows, myLikeRows] = await Promise.all([
+    sql`SELECT post_slug FROM comments WHERE post_slug = ANY(${unique})`,
+    sql`SELECT post_slug FROM post_likes WHERE post_slug = ANY(${unique})`,
     visitorId
-      ? admin.from("post_likes").select("post_slug").eq("visitor_id", visitorId).in("post_slug", unique)
-      : Promise.resolve({ data: [] as { post_slug: string }[] | null, error: null }),
+      ? sql`SELECT post_slug FROM post_likes WHERE visitor_id = ${visitorId}::uuid AND post_slug = ANY(${unique})`
+      : Promise.resolve([] as { post_slug: string }[]),
   ]);
 
-  if (commentRes.error) {
-    throw new Error(commentRes.error.message);
-  }
-
-  const commentRows = commentRes.data ?? [];
-  const likeRows = likeRes.error ? [] : (likeRes.data ?? []);
-  const myLikes = mineRes.error ? [] : (mineRes.data ?? []);
-
   for (const row of commentRows) {
-    const slug = row.post_slug;
-    if (slug && slug in base) base[slug].commentCount += 1;
+    const s = row.post_slug as string;
+    if (s && s in base) base[s].commentCount += 1;
   }
-
   for (const row of likeRows) {
-    const slug = row.post_slug;
-    if (slug && slug in base) base[slug].likeCount += 1;
+    const s = row.post_slug as string;
+    if (s && s in base) base[s].likeCount += 1;
   }
-
-  for (const row of myLikes) {
-    const slug = row.post_slug;
-    if (slug && slug in base) base[slug].liked = true;
+  for (const row of myLikeRows) {
+    const s = row.post_slug as string;
+    if (s && s in base) base[s].liked = true;
   }
 
   return base;
