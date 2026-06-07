@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { AwsClient } from "aws4fetch";
 
 export const runtime = "edge";
 
@@ -51,15 +51,36 @@ export async function POST(req: NextRequest) {
     .replace(/\.[^/.]+$/, "")
     .replace(/[^\w.-]+/g, "-")
     .slice(0, 80);
-  const filename = `blog-images/${crypto.randomUUID()}-${safeBase}.${ext}`;
+  const objectKey = `${crypto.randomUUID()}-${safeBase}.${ext}`;
+
+  const accountId = process.env.R2_ACCOUNT_ID!;
+  const bucket = process.env.R2_BUCKET_NAME!;
+  const publicUrl = process.env.R2_PUBLIC_URL!;
+
+  const r2 = new AwsClient({
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    service: "s3",
+    region: "auto",
+  });
 
   try {
-    const blob = await put(filename, buf, {
-      access: "public",
-      contentType: type,
+    const uploadUrl = `https://${accountId}.r2.cloudflarestorage.com/${bucket}/${objectKey}`;
+    const res = await r2.fetch(uploadUrl, {
+      method: "PUT",
+      body: buf,
+      headers: {
+        "Content-Type": type,
+        "Content-Length": buf.byteLength.toString(),
+      },
     });
 
-    return NextResponse.json({ url: blob.url, path: filename });
+    if (!res.ok) {
+      const text = await res.text();
+      return NextResponse.json({ error: `Upload failed: ${text}` }, { status: 500 });
+    }
+
+    return NextResponse.json({ url: `${publicUrl}/${objectKey}`, path: objectKey });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: message }, { status: 500 });
