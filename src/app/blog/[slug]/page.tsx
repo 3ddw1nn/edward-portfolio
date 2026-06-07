@@ -1,8 +1,7 @@
-import type { ImgHTMLAttributes } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, MessageCircle } from "lucide-react";
-import { MDXRemote } from "next-mdx-remote/rsc";
 import { getPostBySlug } from "@/lib/blog";
+import { renderMarkdown } from "@/lib/render-markdown";
 import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
 import { CommentSection } from "@/components/blog/CommentSection";
@@ -106,25 +105,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Article body */}
       <div className="container mx-auto px-4 md:px-8 max-w-3xl py-14">
-        <div className="prose-blog">
-          <MDXRemote
-            source={post.content}
-            components={{
-              img: (props: ImgHTMLAttributes<HTMLImageElement>) => (
-                <figure className="not-prose mx-auto my-8 w-full max-w-[min(100%,min(36ch,26rem))] overflow-hidden rounded-lg border border-white/[0.08] bg-zinc-900/35 text-[1.0625rem] shadow-[0_12px_40px_-24px_rgba(0,0,0,0.75)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- remote blog uploads (Supabase etc.) */}
-                  <img
-                    {...props}
-                    alt={props.alt ?? ""}
-                    className="mx-auto block h-auto w-full max-w-full object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </figure>
-              ),
-            }}
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element -- prose-blog-figure handles remote img tags */}
+        <div
+          className="prose-blog"
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }}
+        />
 
         <section className="mt-12 border-t border-white/[0.06] pt-8" aria-label="Post reactions">
           <p className="font-brutal text-[9px] uppercase tracking-[0.2em] text-white/35">
