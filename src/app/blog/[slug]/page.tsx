@@ -19,25 +19,22 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  try {
-    const post = await getPostBySlug(slug);
-    return { title: `${post.title} — Edward Lee`, description: post.excerpt };
-  } catch {
-    return { title: "Post not found" };
-  }
+  const post = await getPostBySlug(slug).catch(() => null);
+  if (!post) return { title: "Post not found" };
+  return { title: `${post.title} — Edward Lee`, description: post.excerpt };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  let post;
-  try {
-    post = await getPostBySlug(slug);
-  } catch {
-    notFound();
-  }
+  const post = await getPostBySlug(slug).catch(() => null);
+  if (!post) notFound();
 
-  const engagement = await getSinglePostEngagement(slug, null);
+  const engagement = await getSinglePostEngagement(slug, null).catch(() => ({
+    commentCount: 0,
+    likeCount: 0,
+    liked: false,
+  }));
 
   return (
     <div className="w-full min-h-screen bg-black text-white">

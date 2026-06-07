@@ -73,9 +73,9 @@ export async function getAllPosts(options: PostsListOptions = {}): Promise<PostM
   return qLower ? posts.filter((p) => matchesQuery(p, qLower)) : posts;
 }
 
-export async function getPostBySlug(slug: string): Promise<Post> {
+export async function getPostBySlug(slug: string): Promise<Post | null> {
   const rows = await sql`SELECT * FROM posts WHERE slug = ${slug}`;
-  if (rows.length === 0) throw new Error(`Post not found: ${slug}`);
+  if (rows.length === 0) return null;
   const p = rows[0];
 
   return {
