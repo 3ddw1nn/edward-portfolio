@@ -221,7 +221,7 @@ export default function AdminPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [postsFetchError, setPostsFetchError] = useState("");
   const [postsActionError, setPostsActionError] = useState("");
-  const [supabasePostsWarning, setSupabasePostsWarning] = useState<string | null>(null);
+  const [dbWarning, setSupabasePostsWarning] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsPage, setCommentsPage] = useState(1);
   const [commentsPageCount, setCommentsPageCount] = useState(1);
@@ -428,7 +428,7 @@ export default function AdminPage() {
       .then(async (r) => {
         const j = (await r.json().catch(() => ({}))) as {
           posts?: Post[];
-          supabaseError?: string | null;
+          dbError?: string | null;
           error?: string;
         };
         if (!r.ok) throw new Error(j.error ?? "Failed to load posts");
@@ -438,7 +438,7 @@ export default function AdminPage() {
             tags: Array.isArray(p.tags) ? p.tags : [],
           }))
         );
-        setSupabasePostsWarning(j.supabaseError ?? null);
+        setSupabasePostsWarning(j.dbError ?? null);
       })
       .catch((e: unknown) => {
         setPosts([]);
@@ -1159,9 +1159,9 @@ export default function AdminPage() {
                   {postsFetchError}
                 </p>
               )}
-              {supabasePostsWarning && (
+              {dbWarning && (
                 <p className="mb-4 rounded-xl border border-amber-400/35 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
-                  Database list error: {supabasePostsWarning}
+                  Database list error: {dbWarning}
                 </p>
               )}
 

@@ -58,9 +58,9 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ posts, supabaseError: dbError });
+    return NextResponse.json({ posts, dbError: dbError });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Query failed";
-    return NextResponse.json({ posts: [], supabaseError: message });
+    return NextResponse.json({ posts: [], dbError: message });
   }
 }
