@@ -1,5 +1,11 @@
 import { sql } from "./db";
 
+function toISOString(v: unknown, fallback: string): string {
+  if (!v) return fallback;
+  if (v instanceof Date) return v.toISOString();
+  return String(v);
+}
+
 export type PostMeta = {
   slug: string;
   title: string;
@@ -57,7 +63,7 @@ export async function getAllPosts(options: PostsListOptions = {}): Promise<PostM
     slug: p.slug as string,
     title: p.title as string,
     date: p.date as string,
-    updatedAt: (p.updated_at as string) ?? (p.date as string),
+    updatedAt: toISOString(p.updated_at, p.date as string),
     excerpt: p.excerpt as string,
     tags: (p.tags as string[]) ?? [],
     readTime: p.read_time as string,
@@ -76,7 +82,7 @@ export async function getPostBySlug(slug: string): Promise<Post> {
     slug: p.slug as string,
     title: p.title as string,
     date: p.date as string,
-    updatedAt: (p.updated_at as string) ?? (p.date as string),
+    updatedAt: toISOString(p.updated_at, p.date as string),
     excerpt: p.excerpt as string,
     tags: (p.tags as string[]) ?? [],
     readTime: p.read_time as string,
