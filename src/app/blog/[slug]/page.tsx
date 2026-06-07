@@ -4,7 +4,7 @@ import { getPostBySlug } from "@/lib/blog";
 import { renderMarkdown } from "@/lib/render-markdown";
 import { getSinglePostEngagement } from "@/lib/engagement";
 import { notFound } from "next/navigation";
-import { CommentSection } from "@/components/blog/CommentSection";
+import { CommentSectionLoader } from "@/components/blog/CommentSectionLoader";
 import { BlogPostAdminToolbar } from "@/components/blog/BlogPostAdminToolbar";
 import { PostLikeButton } from "@/components/blog/PostLikeButton";
 import { formatPostDate, formatPostDateTime } from "@/lib/format-date";
@@ -105,7 +105,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Article body */}
       <div className="container mx-auto px-4 md:px-8 max-w-3xl py-14">
-        {/* eslint-disable-next-line @next/next/no-img-element -- prose-blog-figure handles remote img tags */}
         <div
           className="prose-blog"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }}
@@ -121,7 +120,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </section>
 
         {/* Comments */}
-        <CommentSection postSlug={slug} />
+        <CommentSectionLoader postSlug={slug} />
       </div>
     </div>
   );
