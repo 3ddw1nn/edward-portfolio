@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, Send, Mail, Github, Linkedin, Twitter } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Send, Mail, Github, Linkedin, Instagram } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Hero } from "@/components/sections/Hero";
@@ -272,7 +272,7 @@ function ContactSection() {
   const socialLinks = [
     { icon: Linkedin, href: "https://www.linkedin.com/in/edventuretech/", label: "LinkedIn" },
     { icon: Github, href: "https://github.com/3ddw1nn", label: "GitHub" },
-    { icon: Twitter, href: "https://x.com/edventuretech", label: "Twitter" },
+    { icon: Instagram, href: "https://instagram.com/sendthemoods", label: "Instagram" },
   ];
 
   return (
