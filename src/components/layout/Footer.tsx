@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { Github, Linkedin, Instagram } from "lucide-react";
+import { Github } from "lucide-react";
 
 const socialLinks = [
   { icon: Github, href: "https://github.com/3ddw1nn", label: "GitHub" },
-  { icon: Linkedin, href: "https://www.linkedin.com/in/edventuretech/", label: "LinkedIn" },
-  { icon: Instagram, href: "https://instagram.com/sendthemoods", label: "Instagram" },
 ];
 
 export function Footer() {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, Send, Mail, Github, Linkedin, Instagram } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Send, Mail, Github } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Hero } from "@/components/sections/Hero";
@@ -206,16 +206,6 @@ function ProfileSection() {
                 The three-click rule — my design north star
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <a
-                href="/Edward_Lee_Software_Engineer_Resume.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-brutal text-xs tracking-[0.2em] font-medium px-6 py-3 rounded-md border border-white/50 text-white hover:bg-white hover:text-black transition-colors duration-200 uppercase"
-              >
-                View Resume
-              </a>
-            </div>
           </motion.div>
 
           <motion.div
@@ -270,9 +260,7 @@ function ContactSection() {
     "w-full bg-white/10 border border-white/25 rounded-md px-3 py-3 font-brutal text-sm tracking-wide text-white placeholder:text-white/50 focus:outline-none focus:bg-white/15 focus:border-white/60 transition-colors duration-200";
 
   const socialLinks = [
-    { icon: Linkedin, href: "https://www.linkedin.com/in/edventuretech/", label: "LinkedIn" },
     { icon: Github, href: "https://github.com/3ddw1nn", label: "GitHub" },
-    { icon: Instagram, href: "https://instagram.com/sendthemoods", label: "Instagram" },
   ];
 
   return (
