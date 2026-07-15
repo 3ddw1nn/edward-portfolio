@@ -11,8 +11,10 @@ export type AppProject = {
   longDescription: string;
   technologies: string[];
   features: string[];
-  url: string;
-  screenshotUrl: string;
+  url?: string;
+  screenshotUrl?: string;
+  /** Key into the mockup component registry, used when there's no screenshotUrl. */
+  mockupId?: string;
   category: "web" | "mobile" | "ai";
   /** Extra pills next to category + year (e.g. “AI platform” for a web app that is also AI). */
   badgeLabels?: string[];

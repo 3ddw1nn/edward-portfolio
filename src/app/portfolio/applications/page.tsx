@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { projects } from "@/data/projects";
+import { mockupsByProjectId } from "@/components/portfolio/mockups";
 
 const categoryLabel: Record<string, string> = {
   mobile: "Mobile app",
@@ -116,30 +117,43 @@ export default function ApplicationsPage() {
                     </ul>
                   </div>
 
-                  <a
-                    href={project.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 font-brutal text-xs tracking-[0.2em] uppercase px-6 py-3 rounded-md bg-white text-black hover:bg-transparent hover:text-white border border-white transition-colors duration-200 self-start"
-                  >
-                    Visit site <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
+                  {project.url && (
+                    <a
+                      href={project.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 font-brutal text-xs tracking-[0.2em] uppercase px-6 py-3 rounded-md bg-white text-black hover:bg-transparent hover:text-white border border-white transition-colors duration-200 self-start"
+                    >
+                      Visit site <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
                 </div>
 
-                {/* Image */}
+                {/* Image / mockup */}
                 <div className="order-1 lg:order-2">
                   <div className="relative aspect-[4/3] border border-white/10 rounded-lg overflow-hidden group bg-zinc-900">
-                    <Image
-                      src={project.screenshotUrl}
-                      alt={project.title}
-                      fill
-                      className={`object-cover group-hover:scale-105 transition-transform duration-700 ${
-                        project.title === "Knoxlabs VR Partner Portal" ||
-                        project.title === "Content Farmer"
-                          ? "object-left-top"
-                          : "object-top"
-                      }`}
-                    />
+                    {project.screenshotUrl ? (
+                      <Image
+                        src={project.screenshotUrl}
+                        alt={project.title}
+                        fill
+                        className={`object-cover group-hover:scale-105 transition-transform duration-700 ${
+                          project.title === "Knoxlabs VR Partner Portal" ||
+                          project.title === "Content Farmer"
+                            ? "object-left-top"
+                            : "object-top"
+                        }`}
+                      />
+                    ) : project.mockupId && mockupsByProjectId[project.mockupId] ? (
+                      (() => {
+                        const Mockup = mockupsByProjectId[project.mockupId];
+                        return (
+                          <div className="absolute inset-0 group-hover:scale-105 transition-transform duration-700">
+                            <Mockup />
+                          </div>
+                        );
+                      })()
+                    ) : null}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                   </div>
                 </div>

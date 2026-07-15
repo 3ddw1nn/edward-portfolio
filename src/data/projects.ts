@@ -2,6 +2,142 @@ import type { AppProject, WorkExperience } from "@/types";
 
 export const projects: AppProject[] = [
   {
+    id: 12,
+    title: "ClosedAI",
+    year: "2026",
+    description:
+      "A satirical, ChatGPT-styled site presenting a sourced timeline of OpenAI controversies as one long, cursed conversation.",
+    longDescription:
+      "ClosedAI recreates the ChatGPT app shell — sidebar, chat bubbles, composer bar — pixel for pixel, then fills it with a hand-curated, sourced timeline of OpenAI's lawsuits, outages, executive exits, and PR fires since 2023. Each incident renders as an assistant message in an endless fake conversation, complete with category tags, an auto-generated event page per incident, and a running incident counter. Built as a design exercise in cloning a familiar product's UI language to deliver long-form satire backed by real, cited sources.",
+    technologies: ["Astro", "TypeScript", "CSS"],
+    features: [
+      "Full ChatGPT app-shell clone (sidebar, composer, chat bubbles) built in plain Astro + CSS, no chat library",
+      "Hand-curated, sourced incident timeline with category tags and colored pill badges",
+      "Auto-generated individual event pages with prev/next pagination",
+      "Toggleable chronological order and scroll-reveal timeline animations",
+      "Live incident counter and a self-aware strikethrough gag baked into the headline",
+    ],
+    mockupId: "closedai",
+    category: "web",
+    badgeLabels: ["Satire"],
+  },
+  {
+    id: 11,
+    title: "Trovr",
+    year: "2026",
+    description:
+      "A browser extension that turns the wait for ChatGPT, Claude, and Gemini to respond into a paid, privacy-first ad moment.",
+    longDescription:
+      "Trovr shows one clearly-labeled sponsored card — inside a mascot-driven widget — only during the idle window while a supported AI is generating a response, then pays users real money for impressions, clicks, and completed views via Stripe cash-out. The extension's only signal into the page is a boolean \"is generating,\" so it never reads prompt or response content. A companion Next.js/Convex web app handles accounts, cash-out, an advertiser/admin dashboard with campaign analytics, and an AI sprite-generation tool for custom mascots.",
+    technologies: ["Next.js", "React", "TypeScript", "Convex", "WXT", "Tailwind CSS", "Stripe", "Turborepo"],
+    features: [
+      "Sponsored cards that appear only during AI generation on ChatGPT, Claude, Gemini, and Perplexity",
+      "Points-based rewards with a 72-hour review window and Stripe cash-out",
+      "Mascot \"sprite\" companions with idle/reward animations, plus AI-generated custom sprites",
+      "Privacy-first architecture — no access to prompt or response content, ever",
+      "Full advertiser side: campaign creation, analytics dashboard, sprite publishing",
+    ],
+    mockupId: "trovr",
+    category: "web",
+    badgeLabels: ["Browser extension"],
+  },
+  {
+    id: 10,
+    title: "Bloom Studios",
+    year: "2026",
+    description:
+      "Full-stack SaaS for a real art studio business — booking, credits, parent portal, and staff/admin operations in one platform.",
+    longDescription:
+      "Bloom Studios runs the public booking site, a parent portal (bookings, attendance, class credits, invoices), an admin portal (rosters, staff, offers, broadcast email), and in-studio staff/inventory kiosks for a small-group art class business. It's production infrastructure, not a template — live Stripe checkout and webhooks, Supabase auth and Postgres, a credits-based booking system that never expires, transactional email, and QR-based kiosk check-in.",
+    technologies: ["Next.js", "React", "TypeScript", "NestJS", "Prisma", "Supabase", "Stripe", "Tailwind CSS", "Resend"],
+    features: [
+      "Class Credits system — buy a pack, book at your own pace, credits never expire",
+      "Full parent portal: bookings, attendance, purchases, invoices, family management",
+      "Admin portal for class/session/roster management, staff, and offers",
+      "Staff and inventory kiosk mode with QR-based check-in",
+      "Stripe checkout + webhook-driven credit issuance and a full transactional email suite",
+    ],
+    mockupId: "bloom-studios",
+    category: "web",
+  },
+  {
+    id: 9,
+    title: "StartupFiles",
+    year: "2026",
+    description:
+      "A guided business-formation tool that replaces a lawyer's retainer with a step-by-step wizard and a verified city license lookup.",
+    longDescription:
+      "StartupFiles helps first-time founders in California decide between operating as themselves, filing a DBA, or forming an LLC — then walks them through the actual paperwork. A source-verified license lookup covers 480+ California cities with human-checked fees and application links, a comparison table lays out the real tradeoffs between Sole Proprietor, DBA, and LLC, and a companion Chrome extension autofills government forms.",
+    technologies: ["Next.js", "React", "TypeScript", "Convex", "Tailwind CSS", "Resend", "Vite"],
+    features: [
+      "Step-by-step setup wizard producing real, filing-ready checklists and documents",
+      "Source-verified city business license lookup across 480+ California cities",
+      "Transparent fee and tradeoff comparison across Sole Proprietor, DBA, and LLC paths",
+      "Document workspace keeping licenses, applications, and checklists in one place",
+      "Chrome extension companion for autofilling government forms",
+    ],
+    mockupId: "startupfiles",
+    category: "web",
+  },
+  {
+    id: 8,
+    title: "JobSignal",
+    year: "2026",
+    description:
+      "An AI job-search assistant that scrapes live postings, scores them against your resume, and drafts the outreach.",
+    longDescription:
+      "Built out of one frustrating job search, JobSignal continuously scrapes live postings from LinkedIn and other boards, scores every one against the user's actual resume and target roles (Good Fit / Maybe / Bad Fit), and generates tailored outreach emails, cover letters, and LinkedIn DMs for the roles worth pursuing — with an AI tone-check pass before anything goes out. A Telegram bot delivers a daily digest of newly scored postings.",
+    technologies: ["Next.js", "React", "TypeScript", "Convex", "OpenAI API", "Apify", "Tailwind CSS"],
+    features: [
+      "Continuous scraping pipeline pulling live postings on a schedule",
+      "AI job-fit scoring against the user's real resume, ranked with strengths and concerns",
+      "Auto-generated outreach email, cover letter, and LinkedIn DM drafts per job",
+      "AI tone-check pass before any draft goes out",
+      "Telegram bot notifications and a daily digest of new scored postings",
+    ],
+    mockupId: "jobsignal",
+    category: "ai",
+  },
+  {
+    id: 7,
+    title: "ContentDesk",
+    year: "2026",
+    description:
+      "An AI platform that drafts full social campaign sequences from a single prompt — every post reviewed before it ships.",
+    longDescription:
+      "ContentDesk takes a campaign description and drafts a full sequence of platform-specific posts, comments, and outreach, but nothing auto-publishes — every draft goes through a human review and approval step first. Once approved, posts go out for real through connected X, Facebook, Instagram, and YouTube accounts, can be scheduled, and performance (likes, comments, shares, views) flows back in for analytics.",
+    technologies: ["Next.js", "React", "TypeScript", "Convex", "Vercel AI SDK", "OpenAI API", "Tailwind CSS"],
+    features: [
+      "AI-drafted campaign sequences from a single campaign description",
+      "Human review and approval step before anything publishes — no auto-posting",
+      "Real publishing to connected X, Facebook, Instagram, and YouTube accounts",
+      "Scheduling with cancel-anytime before a post goes out",
+      "Analytics pulled back from each platform once a post is live",
+    ],
+    mockupId: "contentdesk",
+    category: "web",
+    badgeLabels: ["AI platform"],
+  },
+  {
+    id: 6,
+    title: "Momo",
+    year: "2026",
+    description:
+      "A voice-first AI companion that listens, remembers, and follows you from the web to a mobile app to a future physical doll.",
+    longDescription:
+      "Momo is a real-time voice conversation partner built on OpenAI's Realtime API for streaming speech-to-text, response, and text-to-speech. Every client — the web app, the Expo mobile app, and a planned ESP32-based physical companion — shares one backend and one Postgres database, so a user's memories and companion persist no matter which device they're talking to it from.",
+    technologies: ["Next.js", "React", "TypeScript", "NestJS", "Expo", "Prisma", "Supabase", "OpenAI Realtime API", "Three.js"],
+    features: [
+      "Real-time voice conversations via OpenAI's Realtime API (streaming STT to LLM to TTS)",
+      "Persistent memory that builds on every past conversation",
+      "Cross-platform continuity — web, mobile, and a planned physical doll share one account and memory",
+      "Interactive 3D model viewer on the landing hero (drag-to-rotate doll model)",
+      "Device pairing and emulator system for the hardware companion, plus an admin usage dashboard",
+    ],
+    mockupId: "momo",
+    category: "ai",
+  },
+  {
     id: 4,
     title: "Knoxlabs VR Partner Portal",
     year: "2025-2026",
